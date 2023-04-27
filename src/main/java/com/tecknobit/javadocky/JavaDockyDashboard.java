@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.psi.*;
@@ -25,6 +26,8 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.HashMap;
 import java.util.prefs.Preferences;
 
@@ -47,9 +50,6 @@ import static javax.swing.SwingConstants.SOUTH;
 @Service
 public class JavaDockyDashboard implements ToolWindowFactory {
 
-    // TODO: 27/04/2023 add PARAMS tag to insert in the methods or constructors to manage the params of the statement
-    //  if insert or not if they has params or not
-
     /**
      * {@code Tag} list of available tags to use to give directions to {@code JavaDocky}
      **/
@@ -64,6 +64,11 @@ public class JavaDockyDashboard implements ToolWindowFactory {
          * {@code instance} tag -> use to link to an instance of the class
          **/
         instance("instance"),
+
+        /**
+         * {@code params} tag -> use to insert the linked params
+         **/
+        params("params"),
 
         /**
          * {@code returnType} tag -> use to fetch the return type of method
@@ -93,6 +98,18 @@ public class JavaDockyDashboard implements ToolWindowFactory {
         public String getTag() {
             return tag;
         }
+
+    }
+
+    public enum MethodType {
+
+        HASH_CODE,
+        EQUALS,
+        CLONE,
+        TO_STRING,
+        GETTER,
+        SETTER,
+        CUSTOM
 
     }
 
@@ -135,18 +152,21 @@ public class JavaDockyDashboard implements ToolWindowFactory {
          **/
         private final JPanel contentPanel = new JPanel();
 
+        private final Project project;
+
         /**
          * Constructor to init {@link JavaDockyContent}
          *
          * @param project: the current project
          **/
         public JavaDockyContent(Project project) throws Exception {
+            this.project = project;
             contentPanel.setLayout(new VerticalLayout(10));
             contentPanel.setBorder(empty(10));
             contentPanel.add(getHeaderTitle("Tags"));
             setTagsLayout();
             contentPanel.add(getHeaderTitle("Configuration"));
-            setConfigurationLayout(project);
+            setConfigurationLayout();
         }
 
         /**
@@ -169,6 +189,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
             final HashMap<Tag, String> descriptions = new HashMap<>();
             descriptions.put(className, "Fetch the name of the class");
             descriptions.put(instance, "Link to an instance of the class");
+            descriptions.put(params, "Insert the linked params");
             descriptions.put(returnType, "Fetch the return type of method");
             JBTable table = new JBTable();
             table.setDefaultEditor(Object.class, null);
@@ -184,12 +205,12 @@ public class JavaDockyDashboard implements ToolWindowFactory {
 
         /**
          * Method to set the configuration items layout
-         *
-         * @param project: the current project
          **/
-        private void setConfigurationLayout(Project project) throws Exception {
+        private void setConfigurationLayout() throws Exception {
             for (String item : items) {
                 JPanel container = new JPanel(new VerticalLayout());
+                ComboBox<MethodType> comboBox = null;
+                EditorTextField docuText = null;
                 container.setBorder(createLineBorder(getColor("#f5f5f5"), 1));
                 JPanel itemPanel = new JPanel(new HorizontalLayout(50));
                 itemPanel.setBorder(empty(10));
@@ -197,21 +218,6 @@ public class JavaDockyDashboard implements ToolWindowFactory {
                 itemCheckBox.setFont(getFontText(15));
                 itemCheckBox.setSelected(preferences.get(item, null) != null);
                 itemPanel.add(itemCheckBox);
-                Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-                if (editor == null)
-                    throw new Exception("Cannot execute JavaDocky");
-                PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-                if (psiFile == null)
-                    throw new Exception("Cannot execute JavaDocky");
-                PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
-                PsiExpressionCodeFragment code = JavaCodeFragmentFactory.getInstance(project)
-                        .createExpressionCodeFragment("", element, null, true);
-                Document document = PsiDocumentManager.getInstance(project).getDocument(code);
-                EditorTextField docuText = new EditorTextField(document, editor.getProject(), JavaFileType.INSTANCE);
-                docuText.setFont(getFontText(13));
-                docuText.setPreferredWidth(300);
-                docuText.setOneLineMode(false);
-                docuText.setVisible(false);
                 BasicArrowButton arrowButton = new BasicArrowButton(SOUTH) {
                     /**
                      * {@inheritDoc}
@@ -248,25 +254,64 @@ public class JavaDockyDashboard implements ToolWindowFactory {
                             preferences.remove(item);
                     }
                 });
-                docuText.addDocumentListener(new DocumentListener() {
-                    /**
-                     * Called after the text of the document has been changed.
-                     *
-                     * @param event the event containing the information about the change.
-                     */
-                    @Override
-                    public void documentChanged(@NotNull DocumentEvent event) {
-                        DocumentListener.super.documentChanged(event);
-                        String vDocu = docuText.getText();
-                        if (vDocu.startsWith("/**") && vDocu.endsWith("**/"))
-                            preferences.put(item, vDocu);
-                    }
-                });
+                if (item.equals("Methods")) {
+                    comboBox = new ComboBox<>(MethodType.values());
+                    comboBox.addItemListener(new ItemListener() {
+                        @Override
+                        public void itemStateChanged(ItemEvent e) {
+                            try {
+                                System.out.println(e.getItem());
+                                createTextEditor();
+                            } catch (Exception ex) {
+                                throw new RuntimeException(ex);
+                            }
+                        }
+                    });
+                    comboBox.setVisible(false);
+                } else {
+                    docuText = createTextEditor();
+                    docuText.addDocumentListener(new DocumentListener() {
+                        /**
+                         * Called after the text of the document has been changed.
+                         *
+                         * @param event the event containing the information about the change.
+                         */
+                        @Override
+                        public void documentChanged(@NotNull DocumentEvent event) {
+                            DocumentListener.super.documentChanged(event);
+                            String vDocu = docuText.getText();
+                            if (vDocu.startsWith("/**") && vDocu.endsWith("**/"))
+                                preferences.put(item, vDocu);
+                        }
+                    });
+                }
                 itemPanel.add(arrowButton);
                 container.add(itemPanel);
-                container.add(docuText);
+                if (comboBox != null)
+                    container.add(comboBox);
+                else
+                    container.add(docuText);
                 contentPanel.add(container);
             }
+        }
+
+        private EditorTextField createTextEditor() throws Exception {
+            Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+            if (editor == null)
+                throw new Exception("Cannot execute JavaDocky");
+            PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+            if (psiFile == null)
+                throw new Exception("Cannot execute JavaDocky");
+            PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
+            PsiExpressionCodeFragment code = JavaCodeFragmentFactory.getInstance(project)
+                    .createExpressionCodeFragment("", element, null, true);
+            Document document = PsiDocumentManager.getInstance(project).getDocument(code);
+            EditorTextField editorTextField = new EditorTextField(document, editor.getProject(), JavaFileType.INSTANCE);
+            editorTextField.setFont(getFontText(13));
+            editorTextField.setPreferredWidth(300);
+            editorTextField.setOneLineMode(false);
+            editorTextField.setVisible(false);
+            return editorTextField;
         }
 
         /**
@@ -302,8 +347,10 @@ public class JavaDockyDashboard implements ToolWindowFactory {
         private void setPanelLayout(BasicArrowButton arrowButton, EditorTextField docuText, int direction,
                                     boolean isVisible, String item) {
             arrowButton.setDirection(direction);
-            docuText.setVisible(isVisible);
-            docuText.setText(preferences.get(item, "/**\n *\n **/"));
+            if (!item.equals("Methods")) {
+                docuText.setVisible(isVisible);
+                docuText.setText(preferences.get(item, "/**\n *\n **/"));
+            }
         }
 
         /**
