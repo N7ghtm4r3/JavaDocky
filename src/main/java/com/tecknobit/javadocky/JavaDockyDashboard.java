@@ -33,6 +33,7 @@ import java.util.prefs.Preferences;
 
 import static com.intellij.ui.content.ContentFactory.SERVICE.getInstance;
 import static com.intellij.util.ui.JBUI.Borders.empty;
+import static com.tecknobit.javadocky.JavaDockyDashboard.MethodType.CUSTOM;
 import static com.tecknobit.javadocky.JavaDockyDashboard.Tag.*;
 import static java.awt.Color.getColor;
 import static java.awt.Font.*;
@@ -142,6 +143,8 @@ public class JavaDockyDashboard implements ToolWindowFactory {
      **/
     private static class JavaDockyContent {
 
+        private static final String defDocuTemplate = "/**\n *\n **/";
+
         /**
          * {@code items} available to create the docu-strings templates
          **/
@@ -153,6 +156,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
         private final JPanel contentPanel = new JPanel();
 
         private final Project project;
+        private EditorTextField methodTextField;
 
         /**
          * Constructor to init {@link JavaDockyContent}
@@ -209,9 +213,9 @@ public class JavaDockyDashboard implements ToolWindowFactory {
         private void setConfigurationLayout() throws Exception {
             for (String item : items) {
                 JPanel container = new JPanel(new VerticalLayout());
+                container.setBorder(createLineBorder(getColor("#f5f5f5"), 1));
                 ComboBox<MethodType> comboBox = null;
                 EditorTextField docuText = null;
-                container.setBorder(createLineBorder(getColor("#f5f5f5"), 1));
                 JPanel itemPanel = new JPanel(new HorizontalLayout(50));
                 itemPanel.setBorder(empty(10));
                 JCheckBox itemCheckBox = new JCheckBox(item);
@@ -227,63 +231,93 @@ public class JavaDockyDashboard implements ToolWindowFactory {
                         return new Dimension(25, 25);
                     }
                 };
-                arrowButton.setVisible(itemCheckBox.isSelected());
                 arrowButton.setBorder(createLineBorder(new Color(0f, 0f, 0f, 0f)));
-                arrowButton.addActionListener(new ActionListener() {
-                    /**
-                     * {@inheritDoc}
-                     **/
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        if (arrowButton.getDirection() == NORTH)
-                            setPanelLayout(arrowButton, docuText, SOUTH, false, item);
-                        else
-                            setPanelLayout(arrowButton, docuText, NORTH, true, item);
-                    }
-                });
-                itemCheckBox.addActionListener(new ActionListener() {
-                    /**
-                     * {@inheritDoc}
-                     **/
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        setPanelLayout(arrowButton, docuText, SOUTH, false, item);
-                        boolean isSelected = itemCheckBox.isSelected();
-                        arrowButton.setVisible(isSelected);
-                        if (!isSelected)
-                            preferences.remove(item);
-                    }
-                });
+                arrowButton.setVisible(itemCheckBox.isSelected());
                 if (item.equals("Methods")) {
                     comboBox = new ComboBox<>(MethodType.values());
+                    setComboBoxLayout(comboBox, false);
+                    ComboBox<MethodType> finalComboBox = comboBox;
+                    itemCheckBox.addActionListener(new ActionListener() {
+                        /**
+                         * {@inheritDoc}
+                         **/
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            boolean isSelected = itemCheckBox.isSelected();
+                            if (isSelected)
+                                preferences.put(item, item);
+                            else
+                                preferences.remove(item);
+                            // TODO: 28/04/2023 MAKE METHOD
+                            arrowButton.setVisible(isSelected);
+                            if (!isSelected)
+                                arrowButton.setDirection(SOUTH);
+                            setComboBoxLayout(finalComboBox, arrowButton.getDirection() != SOUTH);
+                            if (methodTextField != null)
+                                container.remove(methodTextField);
+                        }
+                    });
+                    arrowButton.addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            setComboBoxLayout(finalComboBox, arrowButton.getDirection() == SOUTH);
+                            // TODO: 28/04/2023 MAKE METHOD
+                            if (arrowButton.getDirection() == NORTH)
+                                arrowButton.setDirection(SOUTH);
+                            else
+                                arrowButton.setDirection(NORTH);
+                            if (methodTextField != null)
+                                methodTextField.setVisible(false);
+                        }
+                    });
                     comboBox.addItemListener(new ItemListener() {
                         @Override
                         public void itemStateChanged(ItemEvent e) {
                             try {
-                                System.out.println(e.getItem());
-                                createTextEditor();
+                                MethodType item = (MethodType) e.getItem();
+                                if (!item.equals(CUSTOM))
+                                    manageMethodText(item.name(), container);
+                                else
+                                    manageMethodText(item.name() + "prova", container);
+                            } catch (ClassCastException ignore) {
                             } catch (Exception ex) {
                                 throw new RuntimeException(ex);
                             }
                         }
                     });
-                    comboBox.setVisible(false);
                 } else {
-                    docuText = createTextEditor();
-                    docuText.addDocumentListener(new DocumentListener() {
+                    docuText = createTextEditor(false);
+                    EditorTextField finalDocuText = docuText;
+                    itemCheckBox.addActionListener(new ActionListener() {
                         /**
-                         * Called after the text of the document has been changed.
-                         *
-                         * @param event the event containing the information about the change.
-                         */
+                         * {@inheritDoc}
+                         **/
                         @Override
-                        public void documentChanged(@NotNull DocumentEvent event) {
-                            DocumentListener.super.documentChanged(event);
-                            String vDocu = docuText.getText();
-                            if (vDocu.startsWith("/**") && vDocu.endsWith("**/"))
-                                preferences.put(item, vDocu);
+                        public void actionPerformed(ActionEvent e) {
+                            setDocuTextLayout(finalDocuText, false, item);
+                            boolean isSelected = itemCheckBox.isSelected();
+                            // TODO: 28/04/2023 MAKE METHOD
+                            arrowButton.setVisible(isSelected);
+                            if (!isSelected)
+                                arrowButton.setDirection(SOUTH);
+                            preferences.remove(item);
                         }
                     });
+                    arrowButton.addActionListener(new ActionListener() {
+                        /**
+                         * {@inheritDoc}
+                         **/
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            setDocuTextLayout(finalDocuText, arrowButton.getDirection() != NORTH, item);
+                            // TODO: 28/04/2023 MAKE METHOD
+                            if (arrowButton.getDirection() == NORTH)
+                                arrowButton.setDirection(SOUTH);
+                            else
+                                arrowButton.setDirection(NORTH);
+                        }
+                    });
+                    addEditorListener(finalDocuText, item);
                 }
                 itemPanel.add(arrowButton);
                 container.add(itemPanel);
@@ -293,25 +327,6 @@ public class JavaDockyDashboard implements ToolWindowFactory {
                     container.add(docuText);
                 contentPanel.add(container);
             }
-        }
-
-        private EditorTextField createTextEditor() throws Exception {
-            Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-            if (editor == null)
-                throw new Exception("Cannot execute JavaDocky");
-            PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-            if (psiFile == null)
-                throw new Exception("Cannot execute JavaDocky");
-            PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
-            PsiExpressionCodeFragment code = JavaCodeFragmentFactory.getInstance(project)
-                    .createExpressionCodeFragment("", element, null, true);
-            Document document = PsiDocumentManager.getInstance(project).getDocument(code);
-            EditorTextField editorTextField = new EditorTextField(document, editor.getProject(), JavaFileType.INSTANCE);
-            editorTextField.setFont(getFontText(13));
-            editorTextField.setPreferredWidth(300);
-            editorTextField.setOneLineMode(false);
-            editorTextField.setVisible(false);
-            return editorTextField;
         }
 
         /**
@@ -335,22 +350,69 @@ public class JavaDockyDashboard implements ToolWindowFactory {
             return new Font(font, PLAIN, size);
         }
 
+        private EditorTextField createTextEditor(boolean isVisible) throws Exception {
+            Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+            if (editor == null)
+                throw new Exception("Cannot execute JavaDocky");
+            PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+            if (psiFile == null)
+                throw new Exception("Cannot execute JavaDocky");
+            PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
+            PsiExpressionCodeFragment code = JavaCodeFragmentFactory.getInstance(project)
+                    .createExpressionCodeFragment("", element, null, true);
+            Document document = PsiDocumentManager.getInstance(project).getDocument(code);
+            EditorTextField editorTextField = new EditorTextField(document, editor.getProject(), JavaFileType.INSTANCE);
+            editorTextField.setFont(getFontText(13));
+            editorTextField.setPreferredWidth(300);
+            editorTextField.setOneLineMode(false);
+            editorTextField.setVisible(isVisible);
+            return editorTextField;
+        }
+
+        private void setComboBoxLayout(ComboBox<MethodType> comboBox, boolean isVisible) {
+            comboBox.setVisible(isVisible);
+            comboBox.setEditable(true);
+            comboBox.setSelectedIndex(-1);
+            comboBox.setSelectedItem("CHOOSE DOCU-TEMPLATE FOR A METHOD");
+            comboBox.setEditable(false);
+        }
+
+        private void manageMethodText(String itemName, JPanel container) throws Exception {
+            if (methodTextField != null)
+                container.remove(methodTextField);
+            methodTextField = createTextEditor(true);
+            methodTextField.setText(preferences.get(itemName, defDocuTemplate));
+            addEditorListener(methodTextField, itemName);
+            container.add(methodTextField);
+        }
+
         /**
-         * Method to set the panel layout
+         * Method to set the docu-text layout
          *
-         * @param arrowButton: arrow button to work on
-         * @param docuText:    the editor where insert the template
-         * @param direction:   the direction of the arrow button
-         * @param isVisible:   whether the arrow button is visible
-         * @param item:        the item of the panel
+         * @param docuText:  the editor where insert the template
+         * @param isVisible: whether the arrow button is visible
+         * @param item:      the item of the panel
          **/
-        private void setPanelLayout(BasicArrowButton arrowButton, EditorTextField docuText, int direction,
-                                    boolean isVisible, String item) {
-            arrowButton.setDirection(direction);
-            if (!item.equals("Methods")) {
-                docuText.setVisible(isVisible);
-                docuText.setText(preferences.get(item, "/**\n *\n **/"));
-            }
+        private void setDocuTextLayout(EditorTextField docuText, boolean isVisible, String item) {
+            docuText.setVisible(isVisible);
+            docuText.setText(preferences.get(item, defDocuTemplate));
+        }
+
+        private void addEditorListener(EditorTextField textField, String item) {
+            textField.addDocumentListener(new DocumentListener() {
+                /**
+                 * Called after the text of the document has been changed.
+                 *
+                 * @param event the event containing the information about the change.
+                 */
+                @Override
+                public void documentChanged(@NotNull DocumentEvent event) {
+                    DocumentListener.super.documentChanged(event);
+                    String vDocu = textField.getText();
+                    if (vDocu.startsWith("/**") && vDocu.endsWith("**/"))
+                        preferences.put(item, vDocu);
+                }
+            });
         }
 
         /**
