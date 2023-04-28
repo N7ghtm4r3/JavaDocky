@@ -16,6 +16,8 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.table.JBTable;
+import com.tecknobit.javadocky.JavaDockyConfiguration.MethodType;
+import com.tecknobit.javadocky.JavaDockyConfiguration.Tag;
 import org.jdesktop.swingx.HorizontalLayout;
 import org.jdesktop.swingx.VerticalLayout;
 import org.jetbrains.annotations.NotNull;
@@ -26,15 +28,17 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.HashMap;
-import java.util.prefs.Preferences;
 
+import static com.intellij.openapi.ui.Messages.showErrorDialog;
+import static com.intellij.openapi.ui.Messages.showInputDialog;
 import static com.intellij.ui.content.ContentFactory.SERVICE.getInstance;
 import static com.intellij.util.ui.JBUI.Borders.empty;
-import static com.tecknobit.javadocky.JavaDockyDashboard.MethodType.CUSTOM;
-import static com.tecknobit.javadocky.JavaDockyDashboard.Tag.*;
+import static com.tecknobit.javadocky.JavaDockyConfiguration.JavaDockyItem;
+import static com.tecknobit.javadocky.JavaDockyConfiguration.JavaDockyItem.Methods;
+import static com.tecknobit.javadocky.JavaDockyConfiguration.MethodType.CUSTOM;
+import static com.tecknobit.javadocky.JavaDockyConfiguration.Tag.*;
+import static com.tecknobit.javadocky.JavaDockyConfiguration.configuration;
 import static java.awt.Color.getColor;
 import static java.awt.Font.*;
 import static javax.swing.BorderFactory.createLineBorder;
@@ -50,74 +54,6 @@ import static javax.swing.SwingConstants.SOUTH;
  **/
 @Service
 public class JavaDockyDashboard implements ToolWindowFactory {
-
-    /**
-     * {@code Tag} list of available tags to use to give directions to {@code JavaDocky}
-     **/
-    public enum Tag {
-
-        /**
-         * {@code className} tag -> use to fetch the name of the class
-         **/
-        className("className"),
-
-        /**
-         * {@code instance} tag -> use to link to an instance of the class
-         **/
-        instance("instance"),
-
-        /**
-         * {@code params} tag -> use to insert the linked params
-         **/
-        params("params"),
-
-        /**
-         * {@code returnType} tag -> use to fetch the return type of method
-         **/
-        returnType("returnType");
-
-        /**
-         * {@code tag} value
-         **/
-        private final String tag;
-
-        /**
-         * Constructor to init {@link Tag}
-         *
-         * @param tag: tag value
-         **/
-        Tag(String tag) {
-            this.tag = "<" + tag + ">";
-        }
-
-        /**
-         * Method to get {@link #tag} instance <br>
-         * No-any params required
-         *
-         * @return {@link #tag} instance as {@link String}
-         **/
-        public String getTag() {
-            return tag;
-        }
-
-    }
-
-    public enum MethodType {
-
-        HASH_CODE,
-        EQUALS,
-        CLONE,
-        TO_STRING,
-        GETTER,
-        SETTER,
-        CUSTOM
-
-    }
-
-    /**
-     * {@code preferences} useful to manage the data stored by this plugin
-     **/
-    private static final Preferences preferences = Preferences.userRoot().node("/user/javadocky");
 
     /**
      * Method to create the toolwindow to insert the plugin UI
@@ -142,13 +78,6 @@ public class JavaDockyDashboard implements ToolWindowFactory {
      * @author N7ghtm4r3 - Tecknobit
      **/
     private static class JavaDockyContent {
-
-        private static final String defDocuTemplate = "/**\n *\n **/";
-
-        /**
-         * {@code items} available to create the docu-strings templates
-         **/
-        private static final String[] items = new String[]{"Classes", "Fields", "Constructors", "Methods"};
 
         /**
          * {@code contentPanel} main panel to contain the ui
@@ -211,16 +140,16 @@ public class JavaDockyDashboard implements ToolWindowFactory {
          * Method to set the configuration items layout
          **/
         private void setConfigurationLayout() throws Exception {
-            for (String item : items) {
+            for (JavaDockyItem item : JavaDockyItem.values()) {
                 JPanel container = new JPanel(new VerticalLayout());
                 container.setBorder(createLineBorder(getColor("#f5f5f5"), 1));
-                ComboBox<MethodType> comboBox = null;
-                EditorTextField docuText = null;
+                ComboBox<MethodType> comboBox;
+                EditorTextField docuText;
                 JPanel itemPanel = new JPanel(new HorizontalLayout(50));
                 itemPanel.setBorder(empty(10));
-                JCheckBox itemCheckBox = new JCheckBox(item);
+                JCheckBox itemCheckBox = new JCheckBox(item.name());
                 itemCheckBox.setFont(getFontText(15));
-                itemCheckBox.setSelected(preferences.get(item, null) != null);
+                itemCheckBox.setSelected(configuration.getItemTemplate(item, null) != null);
                 itemPanel.add(itemCheckBox);
                 BasicArrowButton arrowButton = new BasicArrowButton(SOUTH) {
                     /**
@@ -233,10 +162,10 @@ public class JavaDockyDashboard implements ToolWindowFactory {
                 };
                 arrowButton.setBorder(createLineBorder(new Color(0f, 0f, 0f, 0f)));
                 arrowButton.setVisible(itemCheckBox.isSelected());
-                if (item.equals("Methods")) {
+                if (item == Methods) {
+                    docuText = null;
                     comboBox = new ComboBox<>(MethodType.values());
-                    setComboBoxLayout(comboBox, false);
-                    ComboBox<MethodType> finalComboBox = comboBox;
+                    setDefComboBoxLayout(comboBox, false);
                     itemCheckBox.addActionListener(new ActionListener() {
                         /**
                          * {@inheritDoc}
@@ -245,62 +174,66 @@ public class JavaDockyDashboard implements ToolWindowFactory {
                         public void actionPerformed(ActionEvent e) {
                             boolean isSelected = itemCheckBox.isSelected();
                             if (isSelected)
-                                preferences.put(item, item);
+                                configuration.addDocuTemplate(item, "");
                             else
-                                preferences.remove(item);
-                            // TODO: 28/04/2023 MAKE METHOD
-                            arrowButton.setVisible(isSelected);
-                            if (!isSelected)
-                                arrowButton.setDirection(SOUTH);
-                            setComboBoxLayout(finalComboBox, arrowButton.getDirection() != SOUTH);
+                                configuration.removeDocuTemplate(item);
+                            setButtonVisibility(arrowButton, isSelected);
+                            setDefComboBoxLayout(comboBox, arrowButton.getDirection() != SOUTH);
                             if (methodTextField != null)
                                 container.remove(methodTextField);
                         }
                     });
-                    arrowButton.addActionListener(new ActionListener() {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            setComboBoxLayout(finalComboBox, arrowButton.getDirection() == SOUTH);
-                            // TODO: 28/04/2023 MAKE METHOD
-                            if (arrowButton.getDirection() == NORTH)
-                                arrowButton.setDirection(SOUTH);
-                            else
-                                arrowButton.setDirection(NORTH);
-                            if (methodTextField != null)
-                                methodTextField.setVisible(false);
-                        }
+                    arrowButton.addActionListener(e -> {
+                        setDefComboBoxLayout(comboBox, arrowButton.getDirection() == SOUTH);
+                        setButtonDirection(arrowButton);
+                        if (methodTextField != null)
+                            methodTextField.setVisible(false);
                     });
-                    comboBox.addItemListener(new ItemListener() {
-                        @Override
-                        public void itemStateChanged(ItemEvent e) {
-                            try {
-                                MethodType item = (MethodType) e.getItem();
-                                if (!item.equals(CUSTOM))
-                                    manageMethodText(item.name(), container);
-                                else
-                                    manageMethodText(item.name() + "prova", container);
-                            } catch (ClassCastException ignore) {
-                            } catch (Exception ex) {
-                                throw new RuntimeException(ex);
+                    comboBox.addItemListener(e -> {
+                        try {
+                            MethodType methodType = (MethodType) e.getItem();
+                            System.out.println(methodType);
+                            if (methodType != CUSTOM)
+                                manageMethodText(methodType, container);
+                            else {
+                                String name = showInputDialog(project, "Insert a name for the custom method to add",
+                                        "Custom Method Name", null);
+                                if (name != null) {
+                                    // TODO: 28/04/2023 WORK ON DIALOG INPUT TO AVOID THE INFITE LOOP AND MANAGE THE
+                                    //  manageMethodText TO PASS THE METHOD TYPE AND THE CUSTOM NAME
+                                    if (!name.isEmpty()) {
+                                        if (configuration.getCustomMethodTemplate(name, null) == null) {
+                                            manageMethodText(methodType, container);
+                                        } else {
+                                            showErrorDialog("The name inserted is already used",
+                                                    "Name Already Exists");
+                                            setDefComboBoxLayout(comboBox, true);
+                                        }
+                                    } else {
+                                        showErrorDialog("You must insert a valid name for the custom method",
+                                                "Wrong Name");
+                                        setDefComboBoxLayout(comboBox, true);
+                                    }
+                                } else
+                                    setDefComboBoxLayout(comboBox, true);
                             }
+                        } catch (ClassCastException ignore) {
+                        } catch (Exception ex) {
+                            throw new RuntimeException(ex);
                         }
                     });
                 } else {
+                    comboBox = null;
                     docuText = createTextEditor(false);
-                    EditorTextField finalDocuText = docuText;
                     itemCheckBox.addActionListener(new ActionListener() {
                         /**
                          * {@inheritDoc}
                          **/
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            setDocuTextLayout(finalDocuText, false, item);
-                            boolean isSelected = itemCheckBox.isSelected();
-                            // TODO: 28/04/2023 MAKE METHOD
-                            arrowButton.setVisible(isSelected);
-                            if (!isSelected)
-                                arrowButton.setDirection(SOUTH);
-                            preferences.remove(item);
+                            setDocuTextLayout(docuText, false, item);
+                            setButtonVisibility(arrowButton, itemCheckBox.isSelected());
+                            configuration.removeDocuTemplate(item);
                         }
                     });
                     arrowButton.addActionListener(new ActionListener() {
@@ -309,15 +242,11 @@ public class JavaDockyDashboard implements ToolWindowFactory {
                          **/
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            setDocuTextLayout(finalDocuText, arrowButton.getDirection() != NORTH, item);
-                            // TODO: 28/04/2023 MAKE METHOD
-                            if (arrowButton.getDirection() == NORTH)
-                                arrowButton.setDirection(SOUTH);
-                            else
-                                arrowButton.setDirection(NORTH);
+                            setDocuTextLayout(docuText, arrowButton.getDirection() != NORTH, item);
+                            setButtonDirection(arrowButton);
                         }
                     });
-                    addEditorListener(finalDocuText, item);
+                    addEditorListener(docuText, item);
                 }
                 itemPanel.add(arrowButton);
                 container.add(itemPanel);
@@ -350,6 +279,19 @@ public class JavaDockyDashboard implements ToolWindowFactory {
             return new Font(font, PLAIN, size);
         }
 
+        private void setButtonVisibility(BasicArrowButton arrowButton, boolean isVisible) {
+            arrowButton.setVisible(isVisible);
+            if (!isVisible)
+                arrowButton.setDirection(SOUTH);
+        }
+
+        private void setButtonDirection(BasicArrowButton arrowButton) {
+            if (arrowButton.getDirection() == NORTH)
+                arrowButton.setDirection(SOUTH);
+            else
+                arrowButton.setDirection(NORTH);
+        }
+
         private EditorTextField createTextEditor(boolean isVisible) throws Exception {
             Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
             if (editor == null)
@@ -369,7 +311,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
             return editorTextField;
         }
 
-        private void setComboBoxLayout(ComboBox<MethodType> comboBox, boolean isVisible) {
+        private void setDefComboBoxLayout(ComboBox<MethodType> comboBox, boolean isVisible) {
             comboBox.setVisible(isVisible);
             comboBox.setEditable(true);
             comboBox.setSelectedIndex(-1);
@@ -377,12 +319,12 @@ public class JavaDockyDashboard implements ToolWindowFactory {
             comboBox.setEditable(false);
         }
 
-        private void manageMethodText(String itemName, JPanel container) throws Exception {
+        private void manageMethodText(MethodType method, JPanel container) throws Exception {
             if (methodTextField != null)
                 container.remove(methodTextField);
             methodTextField = createTextEditor(true);
-            methodTextField.setText(preferences.get(itemName, defDocuTemplate));
-            addEditorListener(methodTextField, itemName);
+            methodTextField.setText(configuration.getMethodTemplate(method));
+            addEditorListener(methodTextField, method);
             container.add(methodTextField);
         }
 
@@ -393,12 +335,12 @@ public class JavaDockyDashboard implements ToolWindowFactory {
          * @param isVisible: whether the arrow button is visible
          * @param item:      the item of the panel
          **/
-        private void setDocuTextLayout(EditorTextField docuText, boolean isVisible, String item) {
+        private void setDocuTextLayout(EditorTextField docuText, boolean isVisible, JavaDockyItem item) {
             docuText.setVisible(isVisible);
-            docuText.setText(preferences.get(item, defDocuTemplate));
+            docuText.setText(configuration.getItemTemplate(item));
         }
 
-        private void addEditorListener(EditorTextField textField, String item) {
+        private <T extends Enum<?>> void addEditorListener(EditorTextField textField, T item) {
             textField.addDocumentListener(new DocumentListener() {
                 /**
                  * Called after the text of the document has been changed.
@@ -409,8 +351,9 @@ public class JavaDockyDashboard implements ToolWindowFactory {
                 public void documentChanged(@NotNull DocumentEvent event) {
                     DocumentListener.super.documentChanged(event);
                     String vDocu = textField.getText();
-                    if (vDocu.startsWith("/**") && vDocu.endsWith("**/"))
-                        preferences.put(item, vDocu);
+                    if (vDocu.startsWith("/**") && vDocu.endsWith("**/")) {
+                        configuration.addDocuTemplate(item, vDocu);
+                    }
                 }
             });
         }
