@@ -81,8 +81,19 @@ public class JavaDockyDashboard implements ToolWindowFactory {
          **/
         private final JPanel contentPanel = new JPanel();
 
+        /**
+         * {@code project} the project in use
+         **/
         private final Project project;
+
+        /**
+         * {@code methodTextField} the editor text field for the method item
+         **/
         private EditorTextField methodTextField;
+
+        /**
+         * {@code customTemplates} the combobox for the custom method templates
+         **/
         private ComboBox<String> customTemplates;
 
         /**
@@ -182,7 +193,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
                                 container.remove(customMethodPanel[0]);
                                 customMethodPanel[0] = null;
                             }
-                            removeTextField(container);
+                            removeMethodTextField(container);
                         }
                     });
                     arrowButton.addActionListener(e -> {
@@ -194,7 +205,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
                                 container.remove(customMethodPanel[0]);
                                 customMethodPanel[0] = null;
                             }
-                            removeTextField(container);
+                            removeMethodTextField(container);
                         }
                     });
                     comboBox.addActionListener(e -> {
@@ -208,7 +219,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
                                     }
                                     manageMethodText(methodType, container);
                                 } else {
-                                    removeTextField(container);
+                                    removeMethodTextField(container);
                                     if (customMethodPanel[0] == null) {
                                         customMethodPanel[0] = new JPanel(new VerticalLayout());
                                         customMethodPanel[0].setBorder(empty(15));
@@ -320,12 +331,23 @@ public class JavaDockyDashboard implements ToolWindowFactory {
             return new Font(font, PLAIN, size);
         }
 
+        /**
+         * Method to set the arrow button visibility
+         *
+         * @param arrowButton: arrow button
+         * @param isVisible:   whether the arrow button must be visible
+         **/
         private void setButtonVisibility(BasicArrowButton arrowButton, boolean isVisible) {
             arrowButton.setVisible(isVisible);
             if (!isVisible)
                 arrowButton.setDirection(SOUTH);
         }
 
+        /**
+         * Method to set the arrow button direction
+         *
+         * @param arrowButton: arrow button to set the direction of the arrow
+         **/
         private void setButtonDirection(BasicArrowButton arrowButton) {
             if (arrowButton.getDirection() == NORTH)
                 arrowButton.setDirection(SOUTH);
@@ -333,6 +355,12 @@ public class JavaDockyDashboard implements ToolWindowFactory {
                 arrowButton.setDirection(NORTH);
         }
 
+        /**
+         * Method to create an editor text field
+         *
+         * @param isVisible: whether the editor text field must be visible
+         * @return editor text field as {@link EditorTextField}
+         **/
         private EditorTextField createTextEditor(boolean isVisible) throws Exception {
             Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
             if (editor == null)
@@ -352,6 +380,12 @@ public class JavaDockyDashboard implements ToolWindowFactory {
             return editorTextField;
         }
 
+        /**
+         * Method to set the default layout of the combobox
+         *
+         * @param comboBox:  combo box to work on
+         * @param isVisible: whether the combobox must be visible
+         **/
         private void setDefComboBoxLayout(ComboBox<MethodType> comboBox, boolean isVisible) {
             comboBox.setVisible(isVisible);
             comboBox.setEditable(true);
@@ -360,8 +394,14 @@ public class JavaDockyDashboard implements ToolWindowFactory {
             comboBox.setEditable(false);
         }
 
+        /**
+         * Method to manage the method panel
+         *
+         * @param method:    method to work on
+         * @param container: the panel of the method layout
+         **/
         private <T> void manageMethodText(T method, JPanel container) throws Exception {
-            removeTextField(container);
+            removeMethodTextField(container);
             try {
                 MethodType.valueOf(method.toString());
             } catch (IllegalArgumentException e) {
@@ -373,14 +413,24 @@ public class JavaDockyDashboard implements ToolWindowFactory {
             container.add(methodTextField);
         }
 
-        private void removeTextField(JPanel container) {
+        /**
+         * Method to remove the method textfield from the container panel
+         *
+         * @param container: the panel where remove the container panel
+         **/
+        private void removeMethodTextField(JPanel container) {
             if (methodTextField != null)
                 container.remove(methodTextField);
         }
 
+        /**
+         * Method to set the default {@link #customTemplates} layout
+         *
+         * @param container: the panel where set the default {@link #customTemplates} layout
+         **/
         private void setDefCustomTemplatesLayout(JPanel container) {
             customTemplates.setSelectedItem(0);
-            removeTextField(container);
+            removeMethodTextField(container);
         }
 
         /**
@@ -395,6 +445,12 @@ public class JavaDockyDashboard implements ToolWindowFactory {
             docuText.setText(configuration.getItemTemplate(item));
         }
 
+        /**
+         * Method to add a listener on a text field to get the template for an item
+         *
+         * @param textField: the editor text field to get the template for an item
+         * @param item:      the item used for the textfield
+         **/
         private <T> void addEditorListener(EditorTextField textField, T item) {
             boolean deleteIfEmpty = MethodType.isValidMethod(item.toString());
             String sItem = item.toString().replace(CUSTOM.name(), "");
