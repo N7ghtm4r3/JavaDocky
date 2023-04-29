@@ -1,7 +1,6 @@
 package com.tecknobit.javadocky;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -78,7 +77,16 @@ public class JavaDockyConfiguration {
         TO_STRING,
         GETTER,
         SETTER,
-        CUSTOM
+        CUSTOM;
+
+        public static boolean isValidMethod(String method) {
+            try {
+                JavaDockyItem.valueOf(method);
+                return false;
+            } catch (IllegalArgumentException e) {
+                return true;
+            }
+        }
 
     }
 
@@ -89,18 +97,14 @@ public class JavaDockyConfiguration {
      **/
     private static final Preferences preferences = Preferences.userRoot().node("/user/javadocky");
 
-    private static final String defDocuTemplate = "/**\n *\n **/";
+    public static final String defDocuTemplate = "/**\n *\n **/";
 
-    public JavaDockyConfiguration() {
-
+    public <T> void addDocuTemplate(T item, String template) {
+        preferences.put(item.toString(), template);
     }
 
-    public <T extends Enum<?>> void addDocuTemplate(T item, String template) {
-        preferences.put(item.name(), template);
-    }
-
-    public <T extends Enum<?>> void removeDocuTemplate(T item) {
-        preferences.remove(item.name());
+    public <T> void removeDocuTemplate(T item) {
+        preferences.remove(item.toString());
     }
 
     public String getItemTemplate(JavaDockyItem item) {
@@ -135,12 +139,12 @@ public class JavaDockyConfiguration {
         return preferences.get(Constructors.name(), def);
     }
 
-    public String getMethodTemplate(MethodType type) {
+    public <T> String getMethodTemplate(T type) {
         return getMethodTemplate(type, defDocuTemplate);
     }
 
-    public String getMethodTemplate(MethodType type, String def) {
-        return preferences.get(type.name(), def);
+    public <T> String getMethodTemplate(T type, String def) {
+        return preferences.get(type.toString(), def);
     }
 
     public String getHashCodeTemplate() {
@@ -199,11 +203,35 @@ public class JavaDockyConfiguration {
         return preferences.get(CUSTOM.name() + methodName, def);
     }
 
-    public ArrayList<String> getCustomMethodsTemplates() throws BackingStoreException {
+    public ArrayList<String> getCustomMethodTemplates() throws BackingStoreException {
         ArrayList<String> templates = new ArrayList<>();
-        // TODO: 28/04/2023 MANAGE TO GET THE CORRECT CUSTOM LIST 
-        System.out.println(Arrays.toString(preferences.keys()));
-        return null;
+        for (String method : preferences.keys())
+            if (method.startsWith(CUSTOM.name()))
+                templates.add(method.replace(CUSTOM.name(), ""));
+        return templates;
+    }
+
+    public String[] getCustomMethodMenuItems() throws BackingStoreException {
+        ArrayList<String> templates = getCustomMethodTemplates();
+        templates.add("Add custom method");
+        return templates.toArray(new String[0]);
+    }
+
+    public void removeMethodTemplate(String method) {
+        if (getCustomMethodTemplate(method, null) != null)
+            method = CUSTOM.name() + method;
+        preferences.remove(method);
+    }
+
+    public void removeAllMethodTemplates() {
+        preferences.remove(Methods.name());
+        try {
+            for (String method : preferences.keys())
+                if (MethodType.isValidMethod(method))
+                    preferences.remove(method);
+        } catch (BackingStoreException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

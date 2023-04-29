@@ -16,8 +16,6 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.table.JBTable;
-import com.tecknobit.javadocky.JavaDockyConfiguration.MethodType;
-import com.tecknobit.javadocky.JavaDockyConfiguration.Tag;
 import org.jdesktop.swingx.HorizontalLayout;
 import org.jdesktop.swingx.VerticalLayout;
 import org.jetbrains.annotations.NotNull;
@@ -34,11 +32,10 @@ import static com.intellij.openapi.ui.Messages.showErrorDialog;
 import static com.intellij.openapi.ui.Messages.showInputDialog;
 import static com.intellij.ui.content.ContentFactory.SERVICE.getInstance;
 import static com.intellij.util.ui.JBUI.Borders.empty;
-import static com.tecknobit.javadocky.JavaDockyConfiguration.JavaDockyItem;
+import static com.tecknobit.javadocky.JavaDockyConfiguration.*;
 import static com.tecknobit.javadocky.JavaDockyConfiguration.JavaDockyItem.Methods;
 import static com.tecknobit.javadocky.JavaDockyConfiguration.MethodType.CUSTOM;
 import static com.tecknobit.javadocky.JavaDockyConfiguration.Tag.*;
-import static com.tecknobit.javadocky.JavaDockyConfiguration.configuration;
 import static java.awt.Color.getColor;
 import static java.awt.Font.*;
 import static javax.swing.BorderFactory.createLineBorder;
@@ -86,6 +83,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
 
         private final Project project;
         private EditorTextField methodTextField;
+        private ComboBox<String> customTemplates;
 
         /**
          * Constructor to init {@link JavaDockyContent}
@@ -166,6 +164,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
                     docuText = null;
                     comboBox = new ComboBox<>(MethodType.values());
                     setDefComboBoxLayout(comboBox, false);
+                    final JPanel[] customMethodPanel = {null};
                     itemCheckBox.addActionListener(new ActionListener() {
                         /**
                          * {@inheritDoc}
@@ -176,46 +175,88 @@ public class JavaDockyDashboard implements ToolWindowFactory {
                             if (isSelected)
                                 configuration.addDocuTemplate(item, "");
                             else
-                                configuration.removeDocuTemplate(item);
+                                configuration.removeAllMethodTemplates();
                             setButtonVisibility(arrowButton, isSelected);
                             setDefComboBoxLayout(comboBox, arrowButton.getDirection() != SOUTH);
-                            if (methodTextField != null)
-                                container.remove(methodTextField);
+                            if (customMethodPanel[0] != null) {
+                                container.remove(customMethodPanel[0]);
+                                customMethodPanel[0] = null;
+                            }
+                            removeTextField(container);
                         }
                     });
                     arrowButton.addActionListener(e -> {
-                        setDefComboBoxLayout(comboBox, arrowButton.getDirection() == SOUTH);
+                        boolean isVisible = arrowButton.getDirection() == SOUTH;
+                        setDefComboBoxLayout(comboBox, isVisible);
                         setButtonDirection(arrowButton);
-                        if (methodTextField != null)
-                            methodTextField.setVisible(false);
+                        if (!isVisible) {
+                            if (customMethodPanel[0] != null) {
+                                container.remove(customMethodPanel[0]);
+                                customMethodPanel[0] = null;
+                            }
+                            removeTextField(container);
+                        }
                     });
-                    comboBox.addItemListener(e -> {
+                    comboBox.addActionListener(e -> {
                         try {
-                            MethodType methodType = (MethodType) e.getItem();
-                            System.out.println(methodType);
-                            if (methodType != CUSTOM)
-                                manageMethodText(methodType, container);
-                            else {
-                                String name = showInputDialog(project, "Insert a name for the custom method to add",
-                                        "Custom Method Name", null);
-                                if (name != null) {
-                                    // TODO: 28/04/2023 WORK ON DIALOG INPUT TO AVOID THE INFITE LOOP AND MANAGE THE
-                                    //  manageMethodText TO PASS THE METHOD TYPE AND THE CUSTOM NAME
-                                    if (!name.isEmpty()) {
-                                        if (configuration.getCustomMethodTemplate(name, null) == null) {
-                                            manageMethodText(methodType, container);
-                                        } else {
-                                            showErrorDialog("The name inserted is already used",
-                                                    "Name Already Exists");
-                                            setDefComboBoxLayout(comboBox, true);
-                                        }
-                                    } else {
-                                        showErrorDialog("You must insert a valid name for the custom method",
-                                                "Wrong Name");
-                                        setDefComboBoxLayout(comboBox, true);
+                            if (comboBox.getSelectedIndex() != -1) {
+                                MethodType methodType = (MethodType) comboBox.getSelectedItem();
+                                if (methodType != CUSTOM) {
+                                    if (customMethodPanel[0] != null) {
+                                        container.remove(customMethodPanel[0]);
+                                        customMethodPanel[0] = null;
                                     }
-                                } else
-                                    setDefComboBoxLayout(comboBox, true);
+                                    manageMethodText(methodType, container);
+                                } else {
+                                    removeTextField(container);
+                                    if (customMethodPanel[0] == null) {
+                                        customMethodPanel[0] = new JPanel(new VerticalLayout());
+                                        customMethodPanel[0].setBorder(empty(15));
+                                        JLabel jTitle = new JLabel("Current custom methods templates");
+                                        jTitle.setFont(getFontText(15));
+                                        customMethodPanel[0].add(jTitle);
+                                        customTemplates = new ComboBox<>(configuration.getCustomMethodMenuItems());
+                                        customTemplates.addActionListener(e1 -> {
+                                            try {
+                                                String selectedItem = (String) customTemplates.getSelectedItem();
+                                                if (selectedItem.equals("Add custom method")) {
+                                                    String name = showInputDialog(project, "Insert a name for " +
+                                                            "the custom method to add", "Custom Method Name", null);
+                                                    if (name != null) {
+                                                        if (!name.isEmpty()) {
+                                                            if (configuration.getCustomMethodTemplate(name, null)
+                                                                    == null) {
+                                                                configuration.addDocuTemplate(methodType.name()
+                                                                        + name, defDocuTemplate);
+                                                                customTemplates.removeAllItems();
+                                                                for (String method : configuration.getCustomMethodMenuItems())
+                                                                    customTemplates.addItem(method);
+                                                                customTemplates.setEditable(true);
+                                                                customTemplates.setSelectedItem(name);
+                                                                customTemplates.setEditable(false);
+                                                                manageMethodText(name, container);
+                                                            } else {
+                                                                showErrorDialog("The name inserted is already used",
+                                                                        "Name Already Exists");
+                                                                setDefCustomTemplatesLayout(container);
+                                                            }
+                                                        } else {
+                                                            showErrorDialog("You must insert a valid name for " +
+                                                                    "the custom method", "Wrong Name");
+                                                            setDefCustomTemplatesLayout(container);
+                                                        }
+                                                    } else
+                                                        setDefCustomTemplatesLayout(container);
+                                                } else
+                                                    manageMethodText(selectedItem, container);
+                                            } catch (Exception exception) {
+                                                throw new RuntimeException(exception);
+                                            }
+                                        });
+                                        customMethodPanel[0].add(customTemplates);
+                                        container.add(customMethodPanel[0]);
+                                    }
+                                }
                             }
                         } catch (ClassCastException ignore) {
                         } catch (Exception ex) {
@@ -319,13 +360,27 @@ public class JavaDockyDashboard implements ToolWindowFactory {
             comboBox.setEditable(false);
         }
 
-        private void manageMethodText(MethodType method, JPanel container) throws Exception {
-            if (methodTextField != null)
-                container.remove(methodTextField);
+        private <T> void manageMethodText(T method, JPanel container) throws Exception {
+            removeTextField(container);
+            try {
+                MethodType.valueOf(method.toString());
+            } catch (IllegalArgumentException e) {
+                method = (T) (CUSTOM.name() + method);
+            }
             methodTextField = createTextEditor(true);
             methodTextField.setText(configuration.getMethodTemplate(method));
             addEditorListener(methodTextField, method);
             container.add(methodTextField);
+        }
+
+        private void removeTextField(JPanel container) {
+            if (methodTextField != null)
+                container.remove(methodTextField);
+        }
+
+        private void setDefCustomTemplatesLayout(JPanel container) {
+            customTemplates.setSelectedItem(0);
+            removeTextField(container);
         }
 
         /**
@@ -340,7 +395,9 @@ public class JavaDockyDashboard implements ToolWindowFactory {
             docuText.setText(configuration.getItemTemplate(item));
         }
 
-        private <T extends Enum<?>> void addEditorListener(EditorTextField textField, T item) {
+        private <T> void addEditorListener(EditorTextField textField, T item) {
+            boolean deleteIfEmpty = MethodType.isValidMethod(item.toString());
+            String sItem = item.toString().replace(CUSTOM.name(), "");
             textField.addDocumentListener(new DocumentListener() {
                 /**
                  * Called after the text of the document has been changed.
@@ -351,8 +408,16 @@ public class JavaDockyDashboard implements ToolWindowFactory {
                 public void documentChanged(@NotNull DocumentEvent event) {
                     DocumentListener.super.documentChanged(event);
                     String vDocu = textField.getText();
-                    if (vDocu.startsWith("/**") && vDocu.endsWith("**/")) {
+                    if (vDocu.startsWith("/**") && vDocu.endsWith("**/"))
                         configuration.addDocuTemplate(item, vDocu);
+                    else if (vDocu.isEmpty() && deleteIfEmpty) {
+                        configuration.removeMethodTemplate(sItem);
+                        try {
+                            MethodType.valueOf(sItem);
+                        } catch (IllegalArgumentException e) {
+                            customTemplates.removeItem(sItem);
+                            customTemplates.setSelectedItem(0);
+                        }
                     }
                 }
             });
