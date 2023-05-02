@@ -1,7 +1,6 @@
 package com.tecknobit.javadocky;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -49,7 +48,6 @@ import static javax.swing.SwingConstants.SOUTH;
  * @author N7ghtm4r3 - Tecknobit
  * @see ToolWindowFactory
  **/
-@Service
 public class JavaDockyDashboard implements ToolWindowFactory {
 
     /**
@@ -362,6 +360,8 @@ public class JavaDockyDashboard implements ToolWindowFactory {
          * @return editor text field as {@link EditorTextField}
          **/
         private EditorTextField createTextEditor(boolean isVisible) throws Exception {
+            // TODO: 02/05/2023 FIX WHEN THE IDE HAS NOT GOT ANY CLASSES OR FILES OPENED BECAUSE THIS WILL BE NULL
+            //  AND THE DASHBOARD WILL CRASH
             Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
             if (editor == null)
                 throw new Exception("Cannot execute JavaDocky");

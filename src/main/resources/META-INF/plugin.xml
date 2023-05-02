@@ -44,6 +44,7 @@
     <actions>
         <action id="JavaDockyExecutor" class="com.tecknobit.javadocky.JavaDockyExecutor" text="Execute JavaDocky">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift L" replace-all="true"/>
         </action>
     </actions>
 

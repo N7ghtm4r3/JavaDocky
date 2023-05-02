@@ -225,6 +225,15 @@ public class JavaDockyConfiguration {
     }
 
     /**
+     * Method to get whether {@code JavaDocky} have to use the docu-template for classes
+     *
+     * @return whether {@code JavaDocky} have to use the docu-template for classes as boolean
+     **/
+    public boolean isClassTemplateEnabled() {
+        return getClassTemplate(null) != null;
+    }
+
+    /**
      * Method to get the docu-template for the {@link JavaDockyItem#Fields}'s item <br>
      * No-any params required
      *
@@ -242,6 +251,15 @@ public class JavaDockyConfiguration {
      **/
     public String getFieldTemplate(String def) {
         return preferences.get(Fields.name(), def);
+    }
+
+    /**
+     * Method to get whether {@code JavaDocky} have to use the docu-template for fields
+     *
+     * @return whether {@code JavaDocky} have to use the docu-template for fields as boolean
+     **/
+    public boolean isFieldTemplateEnabled() {
+        return getFieldTemplate(null) != null;
     }
 
     /**
@@ -265,6 +283,15 @@ public class JavaDockyConfiguration {
     }
 
     /**
+     * Method to get whether {@code JavaDocky} have to use the docu-template for constructors
+     *
+     * @return whether {@code JavaDocky} have to use the docu-template for constructors as boolean
+     **/
+    public boolean isConstructorTemplateEnabled() {
+        return getConstructorTemplate(null) != null;
+    }
+
+    /**
      * Method to get the docu-template for the {@link JavaDockyItem#Methods}'s item
      *
      * @param type: type of the method to fetch the template
@@ -283,6 +310,15 @@ public class JavaDockyConfiguration {
      **/
     public <T> String getMethodTemplate(T type, String def) {
         return preferences.get(type.toString(), def);
+    }
+
+    /**
+     * Method to get whether {@code JavaDocky} have to use the docu-template for methods
+     *
+     * @return whether {@code JavaDocky} have to use the docu-template for methods as boolean
+     **/
+    public boolean isMethodTemplateEnabled() {
+        return getMethodTemplate(null) != null;
     }
 
     /**
