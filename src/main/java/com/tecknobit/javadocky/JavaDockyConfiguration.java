@@ -133,6 +133,26 @@ public class JavaDockyConfiguration {
         CUSTOM;
 
         /**
+         * Method to get the {@link MethodType} by a method name
+         *
+         * @param methodName: method name of the method to fetch
+         * @return method type as {@link MethodType}
+         **/
+        public static MethodType reachMethodType(String methodName) {
+            methodName = methodName.toUpperCase();
+            for (MethodType type : values()) {
+                String mType = type.toString();
+                if (mType.replace("_", "").equals(methodName))
+                    return valueOf(mType);
+                else if (methodName.startsWith("GET"))
+                    return valueOf(GETTER.toString());
+                else if (methodName.startsWith("SET"))
+                    return valueOf(SETTER.toString());
+            }
+            return CUSTOM;
+        }
+
+        /**
          * Method to check the validity of a method
          *
          * @param method: method to check the validity
@@ -162,7 +182,7 @@ public class JavaDockyConfiguration {
     /**
      * {@code defDocuTemplate} default docu-template
      **/
-    public static final String defDocuTemplate = "/**\n *\n **/";
+    public static final String defDocuTemplate = "/**\n *\n */";
 
     /**
      * Method to add a docu-template
@@ -318,7 +338,7 @@ public class JavaDockyConfiguration {
      * @return whether {@code JavaDocky} have to use the docu-template for methods as boolean
      **/
     public boolean isMethodTemplateEnabled() {
-        return getMethodTemplate(null) != null;
+        return getItemTemplate(Methods) != null;
     }
 
     /**
@@ -507,7 +527,7 @@ public class JavaDockyConfiguration {
         preferences.remove(Methods.name());
         try {
             for (String method : preferences.keys())
-                if (MethodType.isValidMethod(method))
+                if (isValidMethod(method))
                     preferences.remove(method);
         } catch (BackingStoreException e) {
             throw new RuntimeException(e);

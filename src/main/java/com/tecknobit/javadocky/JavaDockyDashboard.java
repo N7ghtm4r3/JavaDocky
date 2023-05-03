@@ -464,7 +464,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
                 public void documentChanged(@NotNull DocumentEvent event) {
                     DocumentListener.super.documentChanged(event);
                     String vDocu = textField.getText();
-                    if (vDocu.startsWith("/**") && vDocu.endsWith("**/"))
+                    if (vDocu.startsWith("/**") && vDocu.endsWith("*/"))
                         configuration.addDocuTemplate(item, vDocu);
                     else if (vDocu.isEmpty() && deleteIfEmpty) {
                         configuration.removeMethodTemplate(sItem);

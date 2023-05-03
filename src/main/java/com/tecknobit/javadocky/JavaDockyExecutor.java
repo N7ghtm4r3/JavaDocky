@@ -21,8 +21,8 @@ public class JavaDockyExecutor extends AnAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
         project = e.getProject();
-        docuManager = new JavaDockyDocuManager(project);
         currentClass = ((PsiJavaFile) e.getData(PlatformDataKeys.PSI_FILE)).getClasses()[0];
+        docuManager = new JavaDockyDocuManager(project, currentClass);
         execJavaDocky();
     }
 
@@ -31,6 +31,7 @@ public class JavaDockyExecutor extends AnAction {
             useClassesDocuTemplate();
             useFieldsDocuTemplate();
             useConstructorsTemplate();
+            useMethodsTemplate();
             navigateInnerClasses(currentClass);
         } catch (Throwable ex) {
             throw new RuntimeException(ex);
@@ -73,17 +74,33 @@ public class JavaDockyExecutor extends AnAction {
         }
     }
 
+    private void useMethodsTemplate() throws Throwable {
+        useMethodsTemplate(currentClass);
+    }
+
+    private void useMethodsTemplate(PsiClass psiClass) throws Throwable {
+        String className = psiClass.getName();
+        if (configuration.isMethodTemplateEnabled()) {
+            useDocuTemplate(() -> {
+                for (PsiMethod method : psiClass.getMethods())
+                    if (!method.getName().equals(className))
+                        addPsiElement(docuManager.createMethodDocu(method), method.getSourceElement());
+            });
+        }
+    }
+
     private void navigateInnerClasses(PsiClass innerClass) throws Throwable {
         for (PsiClass inner : innerClass.getInnerClasses()) {
             useClassesDocuTemplate(inner);
             useFieldsDocuTemplate(inner);
             useConstructorsTemplate(inner);
+            useMethodsTemplate(inner);
             navigateInnerClasses(inner);
         }
     }
 
     private void addPsiElement(PsiDocComment docu, PsiElement psiElement) {
-        if (psiElement != null && !psiElement.getText().startsWith("/**"))
+        if (docu != null && psiElement != null && !psiElement.getText().startsWith("/**"))
             currentClass.addBefore(docu, psiElement);
     }
 
