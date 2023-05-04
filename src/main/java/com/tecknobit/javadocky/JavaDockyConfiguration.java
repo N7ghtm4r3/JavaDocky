@@ -525,6 +525,19 @@ public class JavaDockyConfiguration {
     }
 
     /**
+     * Method to get the template name
+     *
+     * @param methodName: method name to fetch the template name
+     * @return the template name {@link String}
+     **/
+    public String getCustomMethodName(String methodName) throws BackingStoreException {
+        for (String name : getCustomMethodMenuItems())
+            if (name.equals(methodName))
+                return name;
+        return null;
+    }
+
+    /**
      * Method to get the custom method menu items <br>
      * No-any params required
      *

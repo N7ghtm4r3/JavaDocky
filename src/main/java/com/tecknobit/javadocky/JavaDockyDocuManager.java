@@ -37,53 +37,54 @@ public class JavaDockyDocuManager {
     }
 
     public PsiDocComment createMethodDocu(PsiMethod method) throws BackingStoreException {
-        MethodType methodType = reachMethodType(method.getName());
+        String methodName = method.getName();
+        MethodType methodType = reachMethodType(methodName);
         if (methodType != CUSTOM) {
             String template = configuration.getMethodTemplate(methodType, null);
             if (template != null) {
-                if (methodType != SETTER) {
-                    return formatParamsTag(method, formatReturnTypeTag(template.replaceAll(instance.getTag(),
-                            getReturnInstanceName(method)), method));
-                } else {
+                if (methodType != SETTER)
+                    return formatInstanceMethodTag(template, method);
+                else
                     return formatParamsTag(method, template.replaceAll(instance.getTag(), getSetterInstanceName(method)));
-                }
             }
         } else {
             for (String template : configuration.getCustomMethodTemplates()) {
                 boolean useDocuTemplate = true;
-                String hasP = Tag.hasP.getTag();
-                if (template.contains(hasP)) {
-                    String replacer = getTagValue(template, hasP);
-                    String psiParameters = Arrays.toString(method.getParameterList().getParameters());
-                    for (String iHasP : replacer.split(","))
-                        useDocuTemplate = psiParameters.contains(iHasP);
-                    if (useDocuTemplate)
-                        template = removeTagFromTemplate(template, hasP, replacer.replaceAll(",", ", "));
+                String nameContains = Tag.nameContains.getTag();
+                if (template.contains(nameContains)) {
+                    String nameContainsValue = getTagValue(template, nameContains);
+                    boolean useDefName = nameContainsValue.isEmpty();
+                    if (useDefName)
+                        nameContainsValue = configuration.getCustomMethodName(methodName);
+                    if (!methodName.contains(nameContainsValue))
+                        useDocuTemplate = false;
+                    else {
+                        if (useDefName)
+                            nameContainsValue = "";
+                        template = removeTagFromTemplate(template, nameContains, nameContainsValue);
+                    }
                 }
                 if (useDocuTemplate) {
                     String returnTypeIs = Tag.returnTypeIs.getTag();
                     if (template.contains(returnTypeIs)) {
                         String returnTypeValue = getTagValue(template, returnTypeIs);
-                        // TODO: 04/05/2023 WORK WITH Boolean -> boolean
-                        System.out.println(method.getReturnType().getCanonicalText(true));
-                        if (!method.getReturnType().equalsToText(returnTypeValue))
+                        if (!method.getReturnTypeElement().getText().equals(returnTypeValue))
                             useDocuTemplate = false;
                         else
                             template = removeTagFromTemplate(template, returnTypeIs, returnTypeValue);
-                        System.out.println(template);
                     }
                     if (useDocuTemplate) {
-                        String nameContains = Tag.nameContains.getTag();
-                        if (template.contains(nameContains)) {
-                            String nameContainsValue = getTagValue(template, nameContains);
-                            System.out.println(nameContainsValue);
-                            if (!method.getName().contains(nameContainsValue))
-                                useDocuTemplate = false;
-                            else
-                                template = removeTagFromTemplate(template, nameContains, nameContainsValue);
+                        String hasP = Tag.hasP.getTag();
+                        if (template.contains(hasP)) {
+                            String replacer = getTagValue(template, hasP, false);
+                            String psiParameters = Arrays.toString(method.getParameterList().getParameters());
+                            for (String iHasP : replacer.replaceAll(" ", "").split(","))
+                                useDocuTemplate = psiParameters.contains(iHasP);
+                            if (useDocuTemplate)
+                                template = removeTagFromTemplate(template, hasP, replacer);
                         }
                         if (useDocuTemplate)
-                            return formatParamsTag(method, template);
+                            return formatInstanceMethodTag(template, method);
                     }
                 }
             }
@@ -91,24 +92,25 @@ public class JavaDockyDocuManager {
         return null;
     }
 
-    private String getTagValue(String template, String tag) {
-        return template.split(tag)[1].split("\n")[0].replaceAll(" ", "");
-    }
-
-    private String removeTagFromTemplate(String template, String tag, String value) {
-        return template.replaceAll(tag + value, "").replaceAll(tag + " " + value, "");
-    }
-
-    private String getReturnInstanceName(PsiMethod method) {
+    private PsiDocComment formatInstanceMethodTag(String template, PsiMethod method) {
+        String instanceReplacer = null;
         String methodBody = method.getBody().getText();
+        String instanceTag = instance.getTag();
         if (methodBody.contains("return")) {
-            return methodBody.split("return")[1]
+            instanceReplacer = methodBody.split("return")[1]
                     .replace(";", "")
                     .replaceAll(" ", "")
                     .replace("}", "")
                     .replaceAll("\n", "");
         }
-        return "";
+        if (instanceReplacer != null)
+            template = template.replaceAll(instanceTag, instanceReplacer);
+        else {
+            String returnTypeTag = returnType.getTag();
+            template = removeTagFromTemplate(template, returnTypeTag, getTagValue(template, returnTypeTag));
+            template = removeTagFromTemplate(template, instanceTag, getTagValue(template, instanceTag));
+        }
+        return formatParamsTag(method, formatReturnTypeTag(template, method));
     }
 
     private String getSetterInstanceName(PsiMethod method) {
@@ -124,6 +126,21 @@ public class JavaDockyDocuManager {
             }
         }
         return "";
+    }
+
+    private String getTagValue(String template, String tag) {
+        return getTagValue(template, tag, true);
+    }
+
+    private String getTagValue(String template, String tag, boolean removeBlankSpaces) {
+        String tagValue = template.split(tag)[1].split("\n")[0];
+        if (removeBlankSpaces)
+            return tagValue.replaceAll(" ", "");
+        return tagValue;
+    }
+
+    private String removeTagFromTemplate(String template, String tag, String value) {
+        return template.replaceAll(tag + value, "").replaceAll(tag + " " + value, "");
     }
 
     private String formatClassNameTag(String template, NavigationItem item) {
