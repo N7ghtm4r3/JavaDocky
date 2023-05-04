@@ -131,6 +131,9 @@ public class JavaDockyDashboard implements ToolWindowFactory {
             descriptions.put(instance, "Link to an instance of the class");
             descriptions.put(params, "Insert the linked params");
             descriptions.put(returnType, "Fetch the return type of method");
+            descriptions.put(hasP, "Document methods with the specified params");
+            descriptions.put(returnTypeIs, "Document methods with the specified return type");
+            descriptions.put(nameContains, "Document methods if contains the specified name");
             JBTable table = new JBTable();
             table.setDefaultEditor(Object.class, null);
             table.setRowSelectionAllowed(false);

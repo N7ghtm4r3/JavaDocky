@@ -37,7 +37,32 @@ public class JavaDockyConfiguration {
         /**
          * {@code returnType} tag -> use to fetch the return type of method
          **/
-        returnType("returnType");
+        returnType("returnType"),
+
+        /**
+         * {@code hasP} tag -> use to document only the methods with the specified params
+         *
+         * @implNote {@code <hasP>} params_name_value, ..., params_name_value, <b>must be in the same line</b>
+         * @implSpec useful with the {@link MethodType#CUSTOM} method type template
+         **/
+        hasP("hasP"),
+
+        /**
+         * {@code returnTypeIs} tag -> use to document only the methods with the specified return type
+         *
+         * @implNote {@code <returnTypeIs>} boolean, <b>must be in the same line</b>
+         * @implSpec useful with the {@link MethodType#CUSTOM} method type template
+         **/
+        returnTypeIs("returnTypeIs"),
+
+        /**
+         * {@code nameContains} tag -> use to document only the methods if contain the specified name path
+         *
+         * @implNote {@code <nameContains>} characters_sequence, <b>must be in the same line</b>
+         * @apiNote if not specified will be used the name given to the custom method
+         * @implSpec useful with the {@link MethodType#CUSTOM} method type template
+         **/
+        nameContains("nameContains");
 
         /**
          * {@code tag} value
@@ -479,7 +504,10 @@ public class JavaDockyConfiguration {
      * @return {@link MethodType#CUSTOM}'s template as {@link String}
      **/
     public String getCustomMethodTemplate(String methodName, String def) {
-        return preferences.get(CUSTOM.name() + methodName, def);
+        String vCustom = CUSTOM.name();
+        if (!methodName.contains(vCustom))
+            methodName = vCustom + methodName;
+        return preferences.get(methodName, def);
     }
 
     /**
@@ -492,7 +520,7 @@ public class JavaDockyConfiguration {
         ArrayList<String> templates = new ArrayList<>();
         for (String method : preferences.keys())
             if (method.startsWith(CUSTOM.name()))
-                templates.add(method.replace(CUSTOM.name(), ""));
+                templates.add(getCustomMethodTemplate(method));
         return templates;
     }
 
@@ -503,7 +531,10 @@ public class JavaDockyConfiguration {
      * @return custom method menu items as array of {@link String}
      **/
     public String[] getCustomMethodMenuItems() throws BackingStoreException {
-        ArrayList<String> templates = getCustomMethodTemplates();
+        ArrayList<String> templates = new ArrayList<>();
+        for (String method : preferences.keys())
+            if (method.startsWith(CUSTOM.name()))
+                templates.add(method.replace(CUSTOM.name(), ""));
         templates.add("Add custom method");
         return templates.toArray(new String[0]);
     }
