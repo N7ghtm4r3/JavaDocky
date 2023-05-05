@@ -1,6 +1,5 @@
 package com.tecknobit.javadocky;
 
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -27,6 +26,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashMap;
 
+import static com.intellij.ide.highlighter.JavaFileType.INSTANCE;
 import static com.intellij.openapi.ui.Messages.showErrorDialog;
 import static com.intellij.openapi.ui.Messages.showInputDialog;
 import static com.intellij.ui.content.ContentFactory.SERVICE.getInstance;
@@ -99,7 +99,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
          *
          * @param project: the current project
          **/
-        public JavaDockyContent(Project project) throws Exception {
+        public JavaDockyContent(Project project) {
             this.project = project;
             contentPanel.setLayout(new VerticalLayout(10));
             contentPanel.setBorder(empty(10));
@@ -149,7 +149,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
         /**
          * Method to set the configuration items layout
          **/
-        private void setConfigurationLayout() throws Exception {
+        private void setConfigurationLayout() {
             for (JavaDockyItem item : JavaDockyItem.values()) {
                 JPanel container = new JPanel(new VerticalLayout());
                 container.setBorder(createLineBorder(getColor("#f5f5f5"), 1));
@@ -362,20 +362,21 @@ public class JavaDockyDashboard implements ToolWindowFactory {
          * @param isVisible: whether the editor text field must be visible
          * @return editor text field as {@link EditorTextField}
          **/
-        private EditorTextField createTextEditor(boolean isVisible) throws Exception {
-            // TODO: 02/05/2023 FIX WHEN THE IDE HAS NOT GOT ANY CLASSES OR FILES OPENED BECAUSE THIS WILL BE NULL
-            //  AND THE DASHBOARD WILL CRASH
+        private EditorTextField createTextEditor(boolean isVisible) {
+            /*PsiFile myFile = null;
+            EditorFactory editorFactory = EditorFactory.getInstance();
+            Document doc = myFile == null
+                    ? editorFactory.createDocument("")
+                    : PsiDocumentManager.getInstance(project).getDocument(myFile);*/
+            // TODO: 05/05/2023 MANAGE NULL EDITOR
             Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-            if (editor == null)
-                throw new Exception("Cannot execute JavaDocky");
+            // TODO: 05/05/2023 EDIT EDITOR
             PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-            if (psiFile == null)
-                throw new Exception("Cannot execute JavaDocky");
             PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
             PsiExpressionCodeFragment code = JavaCodeFragmentFactory.getInstance(project)
                     .createExpressionCodeFragment("", element, null, true);
             Document document = PsiDocumentManager.getInstance(project).getDocument(code);
-            EditorTextField editorTextField = new EditorTextField(document, editor.getProject(), JavaFileType.INSTANCE);
+            EditorTextField editorTextField = new EditorTextField(document, editor.getProject(), INSTANCE);
             editorTextField.setFont(getFontText(13));
             editorTextField.setPreferredWidth(300);
             editorTextField.setOneLineMode(false);
@@ -403,7 +404,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
          * @param method:    method to work on
          * @param container: the panel of the method layout
          **/
-        private <T> void manageMethodText(T method, JPanel container) throws Exception {
+        private <T> void manageMethodText(T method, JPanel container) {
             removeMethodTextField(container);
             try {
                 MethodType.valueOf(method.toString());
