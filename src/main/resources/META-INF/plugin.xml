@@ -1,37 +1,37 @@
-<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
-    <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
+
     <id>com.tecknobit.javadocky</id>
-
-    <!-- Public plugin name should be written in Title Case.
-         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
+    <version>1.0.0</version>
     <name>JavaDocky</name>
-
-    <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
     <vendor email="infotecknobitcompany@gmail.com" url="https://github.com/N7ghtm4r3">Tecknobit</vendor>
 
-    <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
-         Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
-         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
-    <description><![CDATA[
-    JavaDocky allows you to automatically comment your code with your custom templates only by setting them the first time,
-    then later with just one click everything you have enabled will be commented following the template you have chosen.
-    The items available are the following:
-    <ul>
-        <li>
-            <b>Classes</b>
-        </li>
-        <li>
-            <b>Fields</b>
-        </li>
-        <li>
-            <b>Constructors</b>
-        </li>
-        <li>
-            <b>Methods</b>
-        </li>
-    </ul>
-    ]]></description>
+    <description>
+        <![CDATA[
+            JavaDocky allows you to automatically comment your code with your custom templates only by setting them the first time,
+            then later with just one click everything you have enabled will be commented following the template you have chosen.
+            The items available are the following:
+            <ul>
+                <li>
+                    <b>Classes</b>
+                </li>
+                <li>
+                    <b>Fields</b>
+                </li>
+                <li>
+                    <b>Constructors</b>
+                </li>
+                <li>
+                    <b>Methods</b>
+                </li>
+            </ul>
+        ]]>
+    </description>
+
+    <change-notes>
+        <![CDATA[
+
+        ]]>
+    </change-notes>
 
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.java</depends>

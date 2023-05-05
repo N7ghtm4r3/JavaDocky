@@ -1,15 +1,14 @@
 package com.tecknobit.javadocky;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragmentFactory;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
@@ -29,6 +28,7 @@ import java.util.HashMap;
 import static com.intellij.ide.highlighter.JavaFileType.INSTANCE;
 import static com.intellij.openapi.ui.Messages.showErrorDialog;
 import static com.intellij.openapi.ui.Messages.showInputDialog;
+import static com.intellij.psi.PsiElementFactory.getInstance;
 import static com.intellij.ui.content.ContentFactory.SERVICE.getInstance;
 import static com.intellij.util.ui.JBUI.Borders.empty;
 import static com.tecknobit.javadocky.JavaDockyConfiguration.*;
@@ -363,20 +363,10 @@ public class JavaDockyDashboard implements ToolWindowFactory {
          * @return editor text field as {@link EditorTextField}
          **/
         private EditorTextField createTextEditor(boolean isVisible) {
-            /*PsiFile myFile = null;
-            EditorFactory editorFactory = EditorFactory.getInstance();
-            Document doc = myFile == null
-                    ? editorFactory.createDocument("")
-                    : PsiDocumentManager.getInstance(project).getDocument(myFile);*/
-            // TODO: 05/05/2023 MANAGE NULL EDITOR
-            Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-            // TODO: 05/05/2023 EDIT EDITOR
-            PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-            PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
-            PsiExpressionCodeFragment code = JavaCodeFragmentFactory.getInstance(project)
-                    .createExpressionCodeFragment("", element, null, true);
-            Document document = PsiDocumentManager.getInstance(project).getDocument(code);
-            EditorTextField editorTextField = new EditorTextField(document, editor.getProject(), INSTANCE);
+            Document document = PsiDocumentManager.getInstance(project).getDocument(JavaCodeFragmentFactory
+                    .getInstance(project).createExpressionCodeFragment("", getInstance(project).createCodeBlock(),
+                            null, true));
+            EditorTextField editorTextField = new EditorTextField(document, project, INSTANCE);
             editorTextField.setFont(getFontText(13));
             editorTextField.setPreferredWidth(300);
             editorTextField.setOneLineMode(false);
