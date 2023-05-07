@@ -3,6 +3,7 @@ package com.tecknobit.javadocky;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.wm.ToolWindow;
@@ -366,7 +367,14 @@ public class JavaDockyDashboard implements ToolWindowFactory {
             Document document = PsiDocumentManager.getInstance(project).getDocument(JavaCodeFragmentFactory
                     .getInstance(project).createExpressionCodeFragment("", getInstance(project).createCodeBlock(),
                             null, true));
-            EditorTextField editorTextField = new EditorTextField(document, project, INSTANCE);
+            EditorTextField editorTextField = new EditorTextField(document, project, INSTANCE) {
+                @Override
+                protected @NotNull EditorEx createEditor() {
+                    EditorEx editor = super.createEditor();
+                    editor.setHorizontalScrollbarVisible(true);
+                    return editor;
+                }
+            };
             editorTextField.setFont(getFontText(13));
             editorTextField.setPreferredWidth(300);
             editorTextField.setOneLineMode(false);
