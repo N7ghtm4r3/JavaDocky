@@ -24,12 +24,12 @@ public class JavaDockyDocuManager {
 
     /**
      * {@code factory} useful to add the docu-comment in the {@link #psiClass}
-     **/
+     */
     private final PsiElementFactory factory;
 
     /**
      * {@code psiClass} current class where the plugin is working on
-     **/
+     */
     private final PsiClass psiClass;
 
     /**
@@ -37,7 +37,7 @@ public class JavaDockyDocuManager {
      *
      * @param project:  current project where the plugin is working on
      * @param psiClass: current class where the plugin is working on
-     **/
+     */
     public JavaDockyDocuManager(Project project, PsiClass psiClass) {
         this.factory = JavaPsiFacade.getInstance(project).getElementFactory();
         this.psiClass = psiClass;
@@ -48,7 +48,7 @@ public class JavaDockyDocuManager {
      *
      * @param currentClass: current class where add the docu-comment
      * @return the docu-comment created with the {@link JavaDockyItem#Classes}'s template as {@link PsiDocComment}
-     **/
+     */
     public PsiDocComment createClassDocu(PsiClass currentClass) {
         return createDocuComment(formatClassNameTag(configuration.getClassTemplate(), currentClass));
     }
@@ -58,7 +58,7 @@ public class JavaDockyDocuManager {
      *
      * @param field: field where add the docu-comment
      * @return the docu-comment created with the {@link JavaDockyItem#Fields}'s template as {@link PsiDocComment}
-     **/
+     */
     public PsiDocComment createFieldDocu(PsiField field) {
         return createDocuComment(formatInstanceTag(configuration.getFieldTemplate(), field));
     }
@@ -68,7 +68,7 @@ public class JavaDockyDocuManager {
      *
      * @param constructor: constructor where add the docu-comment
      * @return the docu-comment created with the {@link JavaDockyItem#Constructors}'s template as {@link PsiDocComment}
-     **/
+     */
     public PsiDocComment createConstructorDocu(PsiMethod constructor) {
         return formatParamsTag(constructor, formatClassNameTag(configuration.getConstructorTemplate(), constructor));
     }
@@ -79,7 +79,7 @@ public class JavaDockyDocuManager {
      * @param method: method where add the docu-comment
      * @return the docu-comment created with the {@link JavaDockyItem#Methods}'s template as {@link PsiDocComment}
      * @apiNote this method will automatically fetch if the template to use is {@link MethodType#CUSTOM} or not
-     **/
+     */
     public PsiDocComment createMethodDocu(PsiMethod method) throws BackingStoreException {
         String methodName = method.getName();
         MethodType methodType = reachMethodType(methodName);
@@ -179,7 +179,7 @@ public class JavaDockyDocuManager {
      *         {@link #formatReturnTypeTag(String, PsiMethod)}
      *     </li>
      * </ul>
-     **/
+     */
     private PsiDocComment formatInstanceMethodTag(String template, PsiMethod method) {
         String instanceReplacer = null;
         String methodBody = method.getBody().getText();
@@ -233,7 +233,7 @@ public class JavaDockyDocuManager {
      *
      * @param method: method from fetch the setter instance
      * @return setter instance as {@link String}
-     **/
+     */
     private String getSetterInstanceName(PsiMethod method) {
         String methodBody = method.getBody().getText();
         if (methodBody.contains("this"))
@@ -255,7 +255,7 @@ public class JavaDockyDocuManager {
      * @param template: template from fetch the value of a {@link Tag}
      * @param tag:      the tag from fetch the value
      * @return tag value as {@link String}
-     **/
+     */
     private String getTagValue(String template, String tag) {
         return getTagValue(template, tag, true);
     }
@@ -267,7 +267,7 @@ public class JavaDockyDocuManager {
      * @param tag:               the tag from fetch the value
      * @param removeBlankSpaces: whether remove the blank spaces
      * @return tag value as {@link String}
-     **/
+     */
     private String getTagValue(String template, String tag, boolean removeBlankSpaces) {
         String tagValue = template.split(tag)[1].split("\n")[0];
         if (removeBlankSpaces)
@@ -282,7 +282,7 @@ public class JavaDockyDocuManager {
      * @param tag:      the tag to remove
      * @param value:    the value of a tag to remove
      * @return template as {@link String}
-     **/
+     */
     private String removeTagFromTemplate(String template, String tag, String value) {
         return template.replaceAll(tag + value, "").replaceAll(tag + " " + value, "");
     }
@@ -293,7 +293,7 @@ public class JavaDockyDocuManager {
      * @param template: template to format
      * @param item:     item where add the docu-comment
      * @return the template formatted as {@link String}
-     **/
+     */
     private String formatClassNameTag(String template, NavigationItem item) {
         return formatTag(className, template, item);
     }
@@ -304,7 +304,7 @@ public class JavaDockyDocuManager {
      * @param template: template to format
      * @param item:     item where add the docu-comment
      * @return the template formatted as {@link String}
-     **/
+     */
     private String formatInstanceTag(String template, NavigationItem item) {
         return formatTag(instance, template, item);
     }
@@ -316,7 +316,7 @@ public class JavaDockyDocuManager {
      * @param template: template to format
      * @param item:     item where add the docu-comment
      * @return the template formatted as {@link String}
-     **/
+     */
     private String formatTag(Tag tag, String template, NavigationItem item) {
         return template.replaceAll(tag.getTag(), item.getName());
     }
@@ -327,7 +327,7 @@ public class JavaDockyDocuManager {
      * @param template: template of the method to format
      * @param method    method from fetch the value of the {@link Tag#returnType}
      * @return the template formatted as {@link String}
-     **/
+     */
     private String formatReturnTypeTag(String template, PsiMethod method) {
         return template.replaceAll(returnType.getTag(), method.getReturnType().getCanonicalText());
     }
@@ -359,7 +359,7 @@ public class JavaDockyDocuManager {
      * @param method:   the method from fetch the params list
      * @param template: the template from fetch the params list
      * @return the docu-comment created with the template formatted as {@link PsiDocComment}
-     **/
+     */
     private PsiDocComment formatParamsTag(PsiMethod method, String template) {
         boolean fieldsTemplateEnabled = configuration.isFieldTemplateEnabled();
         StringBuilder lParams = new StringBuilder();
@@ -373,7 +373,6 @@ public class JavaDockyDocuManager {
                 lParams.append(": ").append(formatFieldTemplate(parameter));
             else
                 lParams.append(":\n");
-            lParams.append("*");
         }
         return createDocuComment(template.replaceFirst(params.getTag(), lParams.toString()));
     }
@@ -390,7 +389,7 @@ public class JavaDockyDocuManager {
      *
      * @param parameter: the parameter from fetch the docu-template value
      * @return the docu-template value of the field as {@link String}
-     **/
+     */
     private String formatFieldTemplate(PsiParameter parameter) {
         return configuration.getFieldTemplate()
                 .replaceAll("/\\**\n *", "")
@@ -404,7 +403,7 @@ public class JavaDockyDocuManager {
      *
      * @param template: the template to use to create the docu-comment
      * @return the docu-comment created with the template as {@link PsiDocComment}
-     **/
+     */
     private PsiDocComment createDocuComment(String template) {
         return factory.createDocCommentFromText(template);
     }

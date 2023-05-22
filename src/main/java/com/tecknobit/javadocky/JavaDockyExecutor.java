@@ -23,22 +23,22 @@ public class JavaDockyExecutor extends AnAction {
 
     /**
      * {@code currentClass} current class to document
-     **/
+     */
     private PsiClass currentClass;
 
     /**
      * {@code project} current project to document
-     **/
+     */
     private Project project;
 
     /**
      * {@code docuManager} instance to manage the docu-templates and insert in the {@link #currentClass}
-     **/
+     */
     private JavaDockyDocuManager docuManager;
 
     /**
      * {@inheritDoc}
-     **/
+     */
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
         project = e.getProject();
@@ -50,7 +50,7 @@ public class JavaDockyExecutor extends AnAction {
     /**
      * Method to execute the {@code JavaDocky}'s tool
      * Any-params required
-     **/
+     */
     private void execJavaDocky() {
         try {
             useClassesDocuTemplate();
@@ -66,7 +66,7 @@ public class JavaDockyExecutor extends AnAction {
     /**
      * Method to use the {@link JavaDockyItem#Classes}'s template <br>
      * Any-params required
-     **/
+     */
     private void useClassesDocuTemplate() throws Throwable {
         useClassesDocuTemplate(currentClass);
     }
@@ -75,7 +75,7 @@ public class JavaDockyExecutor extends AnAction {
      * Method to use the {@link JavaDockyItem#Classes}'s template
      *
      * @param psiClass: class where use the docu-template
-     **/
+     */
     private void useClassesDocuTemplate(PsiClass psiClass) throws Throwable {
         if (configuration.isClassTemplateEnabled()) {
             useDocuTemplate(() -> addPsiElement(docuManager.createClassDocu(psiClass), psiClass.getFirstChild()));
@@ -85,7 +85,7 @@ public class JavaDockyExecutor extends AnAction {
     /**
      * Method to use the {@link JavaDockyItem#Fields}'s template <br>
      * Any-params required
-     **/
+     */
     private void useFieldsDocuTemplate() throws Throwable {
         useFieldsDocuTemplate(currentClass);
     }
@@ -94,7 +94,7 @@ public class JavaDockyExecutor extends AnAction {
      * Method to use the {@link JavaDockyItem#Fields}'s template
      *
      * @param psiClass: class where use the docu-template
-     **/
+     */
     private void useFieldsDocuTemplate(PsiClass psiClass) throws Throwable {
         if (configuration.isFieldTemplateEnabled()) {
             useDocuTemplate(() -> {
@@ -107,7 +107,7 @@ public class JavaDockyExecutor extends AnAction {
     /**
      * Method to use the {@link JavaDockyItem#Constructors}'s template <br>
      * Any-params required
-     **/
+     */
     private void useConstructorsTemplate() throws Throwable {
         useConstructorsTemplate(currentClass);
     }
@@ -116,7 +116,7 @@ public class JavaDockyExecutor extends AnAction {
      * Method to use the {@link JavaDockyItem#Constructors}'s template
      *
      * @param psiClass: class where use the docu-template
-     **/
+     */
     private void useConstructorsTemplate(PsiClass psiClass) throws Throwable {
         if (configuration.isConstructorTemplateEnabled()) {
             useDocuTemplate(() -> {
@@ -129,7 +129,7 @@ public class JavaDockyExecutor extends AnAction {
     /**
      * Method to use the {@link JavaDockyItem#Methods}'s template <br>
      * Any-params required
-     **/
+     */
     private void useMethodsTemplate() throws Throwable {
         useMethodsTemplate(currentClass);
     }
@@ -138,7 +138,7 @@ public class JavaDockyExecutor extends AnAction {
      * Method to use the {@link JavaDockyItem#Methods}'s template
      *
      * @param psiClass: class where use the docu-template
-     **/
+     */
     private void useMethodsTemplate(PsiClass psiClass) throws Throwable {
         String className = psiClass.getName();
         if (configuration.isMethodTemplateEnabled()) {
@@ -154,7 +154,7 @@ public class JavaDockyExecutor extends AnAction {
      * Method to use a {@link JavaDockyItem}'s template
      *
      * @param action: action to execute to add the docu-template
-     **/
+     */
     private void useDocuTemplate(ThrowableRunnable<Throwable> action) throws Throwable {
         WriteCommandAction.writeCommandAction(project).run(action);
     }
@@ -164,7 +164,7 @@ public class JavaDockyExecutor extends AnAction {
      *
      * @param docu:       the docu-comment to add
      * @param psiElement: the element where add the docu-comment
-     **/
+     */
     private void addPsiElement(PsiDocComment docu, PsiElement psiElement) {
         if (docu != null && psiElement != null && !psiElement.getText().startsWith("/**"))
             currentClass.addBefore(docu, psiElement);
@@ -174,7 +174,7 @@ public class JavaDockyExecutor extends AnAction {
      * Method to navigate and use the different docu-templates in each inner classe
      *
      * @param innerClass: inner class where use the docu-template
-     **/
+     */
     private void navigateInnerClasses(PsiClass innerClass) throws Throwable {
         for (PsiClass inner : innerClass.getInnerClasses()) {
             useClassesDocuTemplate(inner);

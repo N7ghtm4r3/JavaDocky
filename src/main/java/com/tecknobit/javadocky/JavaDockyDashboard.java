@@ -56,7 +56,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
      *
      * @param project:    the current project
      * @param toolWindow: toolwindow where set the content
-     **/
+     */
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
         try {
@@ -72,34 +72,34 @@ public class JavaDockyDashboard implements ToolWindowFactory {
      * The {@code JavaDockyContent} class is useful to manage the plugin's UI content and manage the dashboard
      *
      * @author N7ghtm4r3 - Tecknobit
-     **/
+     */
     private static class JavaDockyContent {
 
         /**
          * {@code contentPanel} main panel to contain the ui
-         **/
+         */
         private final JPanel contentPanel = new JPanel();
 
         /**
          * {@code project} the project in use
-         **/
+         */
         private final Project project;
 
         /**
          * {@code methodTextField} the editor text field for the method item
-         **/
+         */
         private EditorTextField methodTextField;
 
         /**
          * {@code customTemplates} the combobox for the custom method templates
-         **/
+         */
         private ComboBox<String> customTemplates;
 
         /**
          * Constructor to init {@link JavaDockyContent}
          *
          * @param project: the current project
-         **/
+         */
         public JavaDockyContent(Project project) {
             this.project = project;
             contentPanel.setLayout(new VerticalLayout(10));
@@ -115,7 +115,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
          *
          * @param title: title of the label
          * @return header title as {@link JLabel}
-         **/
+         */
         private JLabel getHeaderTitle(String title) {
             JLabel lTitle = new JLabel(title);
             lTitle.setFont(getFontText(20));
@@ -125,7 +125,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
         /**
          * Method to set the tags layout <br>
          * No-any params required
-         **/
+         */
         private void setTagsLayout() {
             final HashMap<Tag, String> descriptions = new HashMap<>();
             descriptions.put(className, "Fetch the name of the class");
@@ -149,7 +149,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
 
         /**
          * Method to set the configuration items layout
-         **/
+         */
         private void setConfigurationLayout() {
             for (JavaDockyItem item : JavaDockyItem.values()) {
                 JPanel container = new JPanel(new VerticalLayout());
@@ -165,7 +165,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
                 BasicArrowButton arrowButton = new BasicArrowButton(SOUTH) {
                     /**
                      * {@inheritDoc}
-                     **/
+                     */
                     @Override
                     public Dimension getPreferredSize() {
                         return new Dimension(25, 25);
@@ -181,7 +181,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
                     itemCheckBox.addActionListener(new ActionListener() {
                         /**
                          * {@inheritDoc}
-                         **/
+                         */
                         @Override
                         public void actionPerformed(ActionEvent e) {
                             boolean isSelected = itemCheckBox.isSelected();
@@ -282,7 +282,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
                     itemCheckBox.addActionListener(new ActionListener() {
                         /**
                          * {@inheritDoc}
-                         **/
+                         */
                         @Override
                         public void actionPerformed(ActionEvent e) {
                             setDocuTextLayout(docuText, false, item);
@@ -293,7 +293,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
                     arrowButton.addActionListener(new ActionListener() {
                         /**
                          * {@inheritDoc}
-                         **/
+                         */
                         @Override
                         public void actionPerformed(ActionEvent e) {
                             setDocuTextLayout(docuText, arrowButton.getDirection() != NORTH, item);
@@ -317,7 +317,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
          *
          * @param size: size of the text
          * @return font as {@link Font}
-         **/
+         */
         private Font getFontText(int size) {
             return getFontText(DIALOG, size);
         }
@@ -328,7 +328,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
          * @param font: font to use
          * @param size: size of the text
          * @return font as {@link Font}
-         **/
+         */
         private Font getFontText(String font, int size) {
             return new Font(font, PLAIN, size);
         }
@@ -338,7 +338,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
          *
          * @param arrowButton: arrow button
          * @param isVisible:   whether the arrow button must be visible
-         **/
+         */
         private void setButtonVisibility(BasicArrowButton arrowButton, boolean isVisible) {
             arrowButton.setVisible(isVisible);
             if (!isVisible)
@@ -349,7 +349,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
          * Method to set the arrow button direction
          *
          * @param arrowButton: arrow button to set the direction of the arrow
-         **/
+         */
         private void setButtonDirection(BasicArrowButton arrowButton) {
             if (arrowButton.getDirection() == NORTH)
                 arrowButton.setDirection(SOUTH);
@@ -362,7 +362,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
          *
          * @param isVisible: whether the editor text field must be visible
          * @return editor text field as {@link EditorTextField}
-         **/
+         */
         private EditorTextField createTextEditor(boolean isVisible) {
             Document document = PsiDocumentManager.getInstance(project).getDocument(JavaCodeFragmentFactory
                     .getInstance(project).createExpressionCodeFragment("", getInstance(project).createCodeBlock(),
@@ -387,7 +387,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
          *
          * @param comboBox:  combo box to work on
          * @param isVisible: whether the combobox must be visible
-         **/
+         */
         private void setDefComboBoxLayout(ComboBox<MethodType> comboBox, boolean isVisible) {
             comboBox.setVisible(isVisible);
             comboBox.setEditable(true);
@@ -401,7 +401,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
          *
          * @param method:    method to work on
          * @param container: the panel of the method layout
-         **/
+         */
         private <T> void manageMethodText(T method, JPanel container) {
             removeMethodTextField(container);
             try {
@@ -419,7 +419,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
          * Method to remove the method textfield from the container panel
          *
          * @param container: the panel where remove the container panel
-         **/
+         */
         private void removeMethodTextField(JPanel container) {
             if (methodTextField != null)
                 container.remove(methodTextField);
@@ -429,7 +429,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
          * Method to set the default {@link #customTemplates} layout
          *
          * @param container: the panel where set the default {@link #customTemplates} layout
-         **/
+         */
         private void setDefCustomTemplatesLayout(JPanel container) {
             customTemplates.setSelectedItem(0);
             removeMethodTextField(container);
@@ -441,7 +441,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
          * @param docuText:  the editor where insert the template
          * @param isVisible: whether the arrow button is visible
          * @param item:      the item of the panel
-         **/
+         */
         private void setDocuTextLayout(EditorTextField docuText, boolean isVisible, JavaDockyItem item) {
             docuText.setVisible(isVisible);
             docuText.setText(configuration.getItemTemplate(item));
@@ -452,7 +452,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
          *
          * @param textField: the editor text field to get the template for an item
          * @param item:      the item used for the textfield
-         **/
+         */
         private <T> void addEditorListener(EditorTextField textField, T item) {
             boolean deleteIfEmpty = MethodType.isValidMethod(item.toString());
             String sItem = item.toString().replace(CUSTOM.name(), "");
@@ -486,7 +486,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
          * No-any params required
          *
          * @return {@link #contentPanel} instance as {@link JBScrollPane} to make it scrollable
-         **/
+         */
         public JBScrollPane getContent() {
             return new JBScrollPane(contentPanel);
         }
