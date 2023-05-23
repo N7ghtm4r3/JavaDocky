@@ -1,5 +1,5 @@
 # JavaDocky
-**v1.0.0**
+**v1.0.1**
 
 This is the GitHub's repository of **JavaDocky**'s IntelliJ Idea plugin and
 in this repository you can take a look about how this plugin works.
@@ -24,6 +24,7 @@ Thank you for your help!
 
 [![](https://img.shields.io/badge/IntelliJ_IDEA-000000.svg?style=for-the-badge&logo=intellij-idea&logoColor=white)](https://plugins.jetbrains.com/plugin/21684-javadocky)
 [![](https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=java&logoColor=white)](https://www.oracle.com/java/)
+[![](https://img.shields.io/badge/Kotlin-0095D5?&style=for-the-badge&logo=kotlin&logoColor=white)](https://kotlinlang.org/)
 
 ## Donations 
 

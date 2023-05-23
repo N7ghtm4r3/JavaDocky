@@ -166,7 +166,13 @@ public class JavaDockyExecutor extends AnAction {
      * @param psiElement: the element where add the docu-comment
      */
     private void addPsiElement(PsiDocComment docu, PsiElement psiElement) {
-        if (docu != null && psiElement != null && !psiElement.getText().startsWith("/**"))
+        String docuText = "/**";
+        if (psiElement != null) {
+            docuText = psiElement.getText();
+            if (docuText == null)
+                docuText = "/**";
+        }
+        if (docu != null && !docuText.startsWith("/**"))
             currentClass.addBefore(docu, psiElement);
     }
 

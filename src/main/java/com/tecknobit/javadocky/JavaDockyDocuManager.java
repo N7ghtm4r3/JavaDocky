@@ -23,6 +23,12 @@ import static com.tecknobit.javadocky.JavaDockyConfiguration.configuration;
 public class JavaDockyDocuManager {
 
     /**
+     * {@code primitiveTypes} array of primitive types
+     */
+    private static final String[] primitiveTypes = new String[]{"boolean", "byte", "char", "short", "int", "long",
+            "float", "double"};
+
+    /**
      * {@code factory} useful to add the docu-comment in the {@link #psiClass}
      */
     private final PsiElementFactory factory;
@@ -82,7 +88,7 @@ public class JavaDockyDocuManager {
      */
     public PsiDocComment createMethodDocu(PsiMethod method) throws BackingStoreException {
         String methodName = method.getName();
-        MethodType methodType = reachMethodType(methodName);
+        MethodType methodType = reachMethodType(method);
         if (methodType != CUSTOM) {
             String template = configuration.getMethodTemplate(methodType, null);
             if (template != null) {
@@ -112,7 +118,8 @@ public class JavaDockyDocuManager {
                     String returnTypeIs = Tag.returnTypeIs.getTag();
                     if (template.contains(returnTypeIs)) {
                         String returnTypeValue = getTagValue(template, returnTypeIs);
-                        if (!method.getReturnTypeElement().getText().equals(returnTypeValue))
+                        PsiTypeElement returnType = method.getReturnTypeElement();
+                        if (returnType != null && !returnType.getText().equals(returnTypeValue))
                             useDocuTemplate = false;
                         else
                             template = removeTagFromTemplate(template, returnTypeIs, returnTypeValue);
@@ -181,8 +188,11 @@ public class JavaDockyDocuManager {
      * </ul>
      */
     private PsiDocComment formatInstanceMethodTag(String template, PsiMethod method) {
+        PsiCodeBlock body = method.getBody();
         String instanceReplacer = null;
-        String methodBody = method.getBody().getText();
+        String methodBody = "";
+        if (body != null)
+            methodBody = body.getText();
         String instanceTag = instance.getTag();
         if (methodBody.contains("return")) {
             instanceReplacer = methodBody.split("return")[1]
@@ -269,10 +279,13 @@ public class JavaDockyDocuManager {
      * @return tag value as {@link String}
      */
     private String getTagValue(String template, String tag, boolean removeBlankSpaces) {
-        String tagValue = template.split(tag)[1].split("\n")[0];
-        if (removeBlankSpaces)
-            return tagValue.replaceAll(" ", "");
-        return tagValue;
+        if (template.contains(tag)) {
+            String tagValue = template.split(tag)[1].split("\n")[0];
+            if (removeBlankSpaces)
+                return tagValue.replaceAll(" ", "");
+            return tagValue;
+        } else
+            return template;
     }
 
     /**
@@ -284,7 +297,9 @@ public class JavaDockyDocuManager {
      * @return template as {@link String}
      */
     private String removeTagFromTemplate(String template, String tag, String value) {
-        return template.replaceAll(tag + value, "").replaceAll(tag + " " + value, "");
+        if (template.contains(tag))
+            return template.replaceAll(tag + value, "").replaceAll(tag + " " + value, "");
+        return template;
     }
 
     /**
@@ -329,7 +344,12 @@ public class JavaDockyDocuManager {
      * @return the template formatted as {@link String}
      */
     private String formatReturnTypeTag(String template, PsiMethod method) {
-        return template.replaceAll(returnType.getTag(), method.getReturnType().getCanonicalText());
+        String vReturnType = method.getReturnType().getCanonicalText();
+        String returnTypeTag = returnType.getTag();
+        String linkTag = "@link " + returnTypeTag + "}";
+        if (template.contains(linkTag) && Arrays.toString(primitiveTypes).contains(vReturnType))
+            template = template.replaceAll("\\{" + linkTag, returnTypeTag);
+        return template.replaceAll(returnTypeTag, vReturnType);
     }
 
     /**

@@ -1,7 +1,7 @@
 <idea-plugin>
 
     <id>com.tecknobit.javadocky</id>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <name>JavaDocky</name>
     <vendor email="infotecknobitcompany@gmail.com" url="https://github.com/N7ghtm4r3">Tecknobit</vendor>
 
@@ -29,7 +29,23 @@
 
     <change-notes>
         <![CDATA[
-
+            <h1>v. 1.0.1</h1><br>
+            The general documentation's workflow has been optimized and perfected:
+            <ul>
+                <li>
+                    The documentation's workflow of the custom methods has been fixed
+                </li>
+                <li>
+                    The <b>"params"</b> tag has been corrected when have to create a list of multiple params
+                </li>
+                <li>
+                    The enums documentation's workflow has been fixed
+                </li>
+                <li>
+                    The GETTER methods, in the standard layout, can be correctly documented if their return is
+                    "boolean" and their name contains "is" or "are" -> isOk(); / areOk();
+                </li>
+            </ul>
         ]]>
     </change-notes>
 

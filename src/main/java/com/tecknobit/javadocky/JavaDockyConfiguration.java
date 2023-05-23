@@ -1,5 +1,7 @@
 package com.tecknobit.javadocky;
 
+import com.intellij.psi.PsiMethod;
+
 import java.util.ArrayList;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
@@ -144,11 +146,14 @@ public class JavaDockyConfiguration {
 
         /**
          * {@code GETTER} -> to create and use a docu-template for all the GETTER methods
+         *
+         * @apiNote the GETTER methods in the standard layout
          */
         GETTER,
 
         /**
          * {@code SETTER} -> to create and use a docu-template for all the SETTER methods
+         * @apiNote the SETTER methods in the standard layout
          */
         SETTER,
 
@@ -160,18 +165,21 @@ public class JavaDockyConfiguration {
         /**
          * Method to get the {@link MethodType} by a method name
          *
-         * @param methodName: method name of the method to fetch
+         * @param method: the method to fetch its type
          * @return method type as {@link MethodType}
          */
-        public static MethodType reachMethodType(String methodName) {
-            methodName = methodName.toUpperCase();
+        public static MethodType reachMethodType(PsiMethod method) {
+            String methodName = method.getName().toUpperCase();
+            int parameters = method.getParameterList().getParameters().length;
+            String returnType = method.getReturnType().getCanonicalText();
             for (MethodType type : values()) {
                 String mType = type.toString();
                 if (mType.replace("_", "").equals(methodName))
                     return valueOf(mType);
-                else if (methodName.startsWith("GET"))
+                else if ((methodName.startsWith("GET") || ((methodName.startsWith("IS") || methodName.startsWith("ARE"))
+                        && (returnType.equals("boolean") || returnType.equals("java.lang.Boolean")))) && parameters == 0) {
                     return valueOf(GETTER.toString());
-                else if (methodName.startsWith("SET"))
+                } else if (methodName.startsWith("SET") && parameters == 1)
                     return valueOf(SETTER.toString());
             }
             return CUSTOM;
