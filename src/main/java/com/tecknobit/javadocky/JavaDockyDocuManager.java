@@ -8,7 +8,9 @@ import com.tecknobit.javadocky.JavaDockyConfiguration.JavaDockyItem;
 import com.tecknobit.javadocky.JavaDockyConfiguration.MethodType;
 import com.tecknobit.javadocky.JavaDockyConfiguration.Tag;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.prefs.BackingStoreException;
 
 import static com.tecknobit.javadocky.JavaDockyConfiguration.MethodType.*;
@@ -23,10 +25,10 @@ import static com.tecknobit.javadocky.JavaDockyConfiguration.configuration;
 public class JavaDockyDocuManager {
 
     /**
-     * {@code primitiveTypes} array of primitive types
+     * {@code PRIMITIVE_TYPES} list of primitive types
      */
-    private static final String[] primitiveTypes = new String[]{"boolean", "byte", "char", "short", "int", "long",
-            "float", "double"};
+    private static final ArrayList<String> PRIMITIVE_TYPES = new ArrayList<>(List.of("boolean", "byte", "char", "short",
+            "int", "long", "float", "double"));
 
     /**
      * {@code factory} useful to add the docu-comment in the {@link #psiClass}
@@ -347,7 +349,7 @@ public class JavaDockyDocuManager {
         String vReturnType = method.getReturnType().getCanonicalText();
         String returnTypeTag = returnType.getTag();
         String linkTag = "@link " + returnTypeTag + "}";
-        if (template.contains(linkTag) && Arrays.toString(primitiveTypes).contains(vReturnType))
+        if (template.contains(linkTag) && PRIMITIVE_TYPES.contains(vReturnType))
             template = template.replaceAll("\\{" + linkTag, returnTypeTag);
         return template.replaceAll(returnTypeTag, vReturnType);
     }
@@ -387,13 +389,15 @@ public class JavaDockyDocuManager {
             if (lParams.toString().isEmpty())
                 lParams.append("@param ");
             else
-                lParams.append(" @param ");
+                lParams.append("* @param ");
             lParams.append(parameter.getName());
             if (fieldsTemplateEnabled)
                 lParams.append(": ").append(formatFieldTemplate(parameter));
             else
                 lParams.append(":\n");
         }
+        if (!lParams.toString().isEmpty())
+            lParams.append("*");
         return createDocuComment(template.replaceFirst(params.getTag(), lParams.toString()));
     }
 

@@ -1,5 +1,5 @@
 # JavaDocky
-**v1.0.1**
+**v1.0.2**
 
 This is the GitHub's repository of **JavaDocky**'s IntelliJ Idea plugin and
 in this repository you can take a look about how this plugin works.

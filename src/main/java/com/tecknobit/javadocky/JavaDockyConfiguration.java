@@ -3,6 +3,7 @@ package com.tecknobit.javadocky;
 import com.intellij.psi.PsiMethod;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -153,6 +154,7 @@ public class JavaDockyConfiguration {
 
         /**
          * {@code SETTER} -> to create and use a docu-template for all the SETTER methods
+         *
          * @apiNote the SETTER methods in the standard layout
          */
         SETTER,
@@ -161,6 +163,12 @@ public class JavaDockyConfiguration {
          * {@code CUSTOM} -> to create and use a docu-template for all the CUSTOM methods that the user choose
          */
         CUSTOM;
+
+        /**
+         * {@code GETTER_NAMES} list of possible getter names
+         */
+        private static final ArrayList<String> GETTER_NAMES = new ArrayList<>(List.of("GET", "IS", "ARE", "CAN", "HAS",
+                "HAVE"));
 
         /**
          * Method to get the {@link MethodType} by a method name
@@ -176,9 +184,10 @@ public class JavaDockyConfiguration {
                 String mType = type.toString();
                 if (mType.replace("_", "").equals(methodName))
                     return valueOf(mType);
-                else if ((methodName.startsWith("GET") || ((methodName.startsWith("IS") || methodName.startsWith("ARE"))
-                        && (returnType.equals("boolean") || returnType.equals("java.lang.Boolean")))) && parameters == 0) {
-                    return valueOf(GETTER.toString());
+                else if (parameters == 0) {
+                    for (String name : GETTER_NAMES)
+                        if (methodName.startsWith(name))
+                            return valueOf(GETTER.toString());
                 } else if (methodName.startsWith("SET") && parameters == 1)
                     return valueOf(SETTER.toString());
             }

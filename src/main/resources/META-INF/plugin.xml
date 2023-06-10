@@ -1,7 +1,7 @@
 <idea-plugin>
 
     <id>com.tecknobit.javadocky</id>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
     <name>JavaDocky</name>
     <vendor email="infotecknobitcompany@gmail.com" url="https://github.com/N7ghtm4r3">Tecknobit</vendor>
 
@@ -44,6 +44,17 @@
                 <li>
                     The GETTER methods, in the standard layout, can be correctly documented if their return is
                     "boolean" and their name contains "is" or "are" -> isOk(); / areOk();
+                </li>
+            </ul>
+            <h1>v. 1.0.2</h1><br>
+            The general documentation's workflow has been optimized and perfected:
+            <ul>
+                <li>
+                    The <b>"params"</b> tag has been corrected when have to create a list of multiple params
+                </li>
+                <li>
+                    The GETTER methods, in the standard layout, can be correctly documented whether they have specific
+                    keyword in their name
                 </li>
             </ul>
         ]]>
