@@ -1,7 +1,7 @@
 <idea-plugin>
 
     <id>com.tecknobit.javadocky</id>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
     <name>JavaDocky</name>
     <vendor email="infotecknobitcompany@gmail.com" url="https://github.com/N7ghtm4r3">Tecknobit</vendor>
 
@@ -57,6 +57,8 @@
                     keyword in their name
                 </li>
             </ul>
+            <h1>v. 1.0.3</h1><br>
+            The UI refresh workflow fixed
         ]]>
     </change-notes>
 

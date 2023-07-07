@@ -24,6 +24,8 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ContainerEvent;
+import java.awt.event.ContainerListener;
 import java.util.HashMap;
 
 import static com.intellij.ide.highlighter.JavaFileType.INSTANCE;
@@ -103,6 +105,7 @@ public class JavaDockyDashboard implements ToolWindowFactory {
         public JavaDockyContent(Project project) {
             this.project = project;
             contentPanel.setLayout(new VerticalLayout(10));
+            contentPanel.addHierarchyListener(e -> refreshPanel());
             contentPanel.setBorder(empty(10));
             contentPanel.add(getHeaderTitle("Tags"));
             setTagsLayout();
@@ -153,6 +156,17 @@ public class JavaDockyDashboard implements ToolWindowFactory {
         private void setConfigurationLayout() {
             for (JavaDockyItem item : JavaDockyItem.values()) {
                 JPanel container = new JPanel(new VerticalLayout());
+                container.addContainerListener(new ContainerListener() {
+                    @Override
+                    public void componentAdded(ContainerEvent e) {
+                        refreshPanel(container);
+                    }
+
+                    @Override
+                    public void componentRemoved(ContainerEvent e) {
+                        refreshPanel(container);
+                    }
+                });
                 container.setBorder(createLineBorder(getColor("#f5f5f5"), 1));
                 ComboBox<MethodType> comboBox;
                 EditorTextField docuText;
@@ -225,6 +239,17 @@ public class JavaDockyDashboard implements ToolWindowFactory {
                                     if (customMethodPanel[0] == null) {
                                         customMethodPanel[0] = new JPanel(new VerticalLayout());
                                         customMethodPanel[0].setBorder(empty(15));
+                                        customMethodPanel[0].addContainerListener(new ContainerListener() {
+                                            @Override
+                                            public void componentAdded(ContainerEvent e) {
+                                                refreshPanel(customMethodPanel[0]);
+                                            }
+
+                                            @Override
+                                            public void componentRemoved(ContainerEvent e) {
+                                                refreshPanel(customMethodPanel[0]);
+                                            }
+                                        });
                                         JLabel jTitle = new JLabel("Current custom methods templates");
                                         jTitle.setFont(getFontText(15));
                                         customMethodPanel[0].add(jTitle);
@@ -479,6 +504,24 @@ public class JavaDockyDashboard implements ToolWindowFactory {
                     }
                 }
             });
+        }
+
+        /**
+         * Method to refresh the UI of the {@link #contentPanel} <br>
+         * No-any params required
+         */
+        private void refreshPanel() {
+            refreshPanel(contentPanel);
+        }
+
+        /**
+         * Method to refresh the UI of a panel
+         *
+         * @param panel: the panel to refresh
+         */
+        private void refreshPanel(JPanel panel) {
+            panel.validate();
+            panel.repaint();
         }
 
         /**
