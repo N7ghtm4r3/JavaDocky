@@ -405,57 +405,40 @@ public class JavaDockyDocuManager {
      * @param vReturnType:   the return type value
      * @return the template correctly formatted as {@link String}
      */
-    // TODO: 15/07/2023 WORK AND FIX ON MANY CASES
     private String formatParameterizedClass(String template, String linkTag, String returnTypeTag, String vReturnType) {
-        String[] components = vReturnType.split("<");
-        StringBuilder returnValue = new StringBuilder();
-        for (String component : components) {
-            if (component.contains(",")) {
-                if (returnValue.toString().endsWith(OF_KEYWORD)) {
-                    int totalLength = returnValue.length();
-                    returnValue.replace(totalLength - OF_KEYWORD.length(), totalLength, AND_KEYWORD);
-                }
-                for (String vClass : component.split(","))
-                    returnValue = appendClassValue(template, linkTag, returnValue, vClass, AND_KEYWORD);
-            } else {
-                if (returnValue.toString().endsWith(AND_KEYWORD)) {
-                    int totalLength = returnValue.length();
-                    returnValue.replace(totalLength - AND_KEYWORD.length(), totalLength, OF_KEYWORD);
-                }
-                returnValue = appendClassValue(template, linkTag, returnValue, component, OF_KEYWORD);
-            }
-        }
-        if (template.contains(linkTag))
+        vReturnType = vReturnType.replaceAll(">", "");
+        StringBuilder formatter;
+        if (template.contains(linkTag)) {
+            formatter = new StringBuilder();
             template = clearFromLinkTag(template, linkTag, returnTypeTag);
-        return template.replaceAll(returnTypeTag, returnValue.toString());
+            for (String vClass : vReturnType.split("<")) {
+                if (vClass.contains(","))
+                    for (String paramClass : vClass.split(","))
+                        formatter.append("{@link ").append(paramClass).append("}").append(AND_KEYWORD);
+                else {
+                    if (formatter.toString().endsWith(AND_KEYWORD))
+                        formatter = clearFormatter(formatter, AND_KEYWORD, OF_KEYWORD);
+                    formatter.append("{@link ").append(vClass).append("}").append(OF_KEYWORD);
+                }
+            }
+            formatter = clearFormatter(formatter, OF_KEYWORD, "");
+        } else
+            formatter = new StringBuilder(vReturnType.replaceAll("<", OF_KEYWORD).replaceAll(",", AND_KEYWORD));
+        return template.replaceAll(returnTypeTag, formatter.toString());
     }
 
     /**
-     * Method to append a class value to the current {@link StringBuilder}
+     * Method to clear the formatter
      *
-     * @param template:    template of the method to format
-     * @param linkTag:     the {@code "{@link }"} tag correctly filled
-     * @param returnValue: the {@link Tag#returnType} tag
-     * @param vClass:      the class to append
-     * @param keyword:     the keyword to append ({@link #AND_KEYWORD} or {@link #OF_KEYWORD})
-     * @return the value to use as formatter as {@link StringBuilder}
+     * @param formatter: the current {@link StringBuilder}
+     * @param keyword:   keyword to remove
+     * @param replacer:  the replacer value to replace keyword
+     * @return formatter as {@link StringBuilder}
      */
-    // TODO: 15/07/2023 WORK AND FIX ON MANY CASES
-    private StringBuilder appendClassValue(String template, String linkTag, StringBuilder returnValue,
-                                           String vClass, String keyword) {
-        if (template.contains(linkTag)) {
-            returnValue.append("{@link ");
-            if (vClass.contains(">"))
-                returnValue.append(vClass.replace(">", "")).append("}");
-            else
-                returnValue.append(vClass).append("}").append(keyword);
-        } else {
-            if (vClass.contains(">"))
-                returnValue.append(vClass.replace(">", ""));
-            else
-                returnValue.append(vClass).append(keyword);
-        }
-        return returnValue;
+    private StringBuilder clearFormatter(StringBuilder formatter, String keyword, String replacer) {
+        int totalLength = formatter.length();
+        formatter.replace(totalLength - keyword.length(), totalLength, replacer);
+        return formatter;
     }
 
     /**

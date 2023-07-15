@@ -59,6 +59,15 @@
             </ul>
             <h1>v. 1.0.3</h1><br>
             The UI refresh workflow fixed
+            <h1>v. 1.0.4</h1><br>
+            The general documentation's workflow has been optimized and perfected:
+            <ul>
+                <li>
+                    The <b>"returnType"</b> tag has been corrected when have to document the parameterized classes
+                </li>
+                <li>
+                </li>
+            </ul>
         ]]>
     </change-notes>
 
