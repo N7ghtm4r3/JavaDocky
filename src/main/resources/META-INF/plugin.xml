@@ -1,7 +1,7 @@
 <idea-plugin>
 
     <id>com.tecknobit.javadocky</id>
-    <version>1.0.3</version>
+    <version>1.0.4</version>
     <name>JavaDocky</name>
     <vendor email="infotecknobitcompany@gmail.com" url="https://github.com/N7ghtm4r3">Tecknobit</vendor>
 

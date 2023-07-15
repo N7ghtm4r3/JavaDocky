@@ -10,6 +10,7 @@ import com.tecknobit.javadocky.JavaDockyConfiguration.Tag;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.prefs.BackingStoreException;
 
@@ -29,6 +30,16 @@ public class JavaDockyDocuManager {
      */
     private static final ArrayList<String> PRIMITIVE_TYPES = new ArrayList<>(List.of("boolean", "byte", "char", "short",
             "int", "long", "float", "double"));
+
+    /**
+     * {@code AND_KEYWORD} and keyword
+     */
+    private static final String AND_KEYWORD = " and ";
+
+    /**
+     * {@code OF_KEYWORD} of keyword
+     */
+    private static final String OF_KEYWORD = " of ";
 
     /**
      * {@code factory} useful to add the docu-comment in the {@link #psiClass}
@@ -350,8 +361,101 @@ public class JavaDockyDocuManager {
         String returnTypeTag = returnType.getTag();
         String linkTag = "@link " + returnTypeTag + "}";
         if (template.contains(linkTag) && PRIMITIVE_TYPES.contains(vReturnType))
-            template = template.replaceAll("\\{" + linkTag, returnTypeTag);
+            template = clearFromLinkTag(template, linkTag, returnTypeTag);
+        else if (vReturnType.contains("<"))
+            return formatParameterizedClass(template, linkTag, returnTypeTag, vReturnType);
         return template.replaceAll(returnTypeTag, vReturnType);
+    }
+
+    /**
+     * Method to remove the {@code "{@link }"} tag from the template
+     *
+     * @param template:      template of the method to format
+     * @param linkTag:       the {@code "{@link }"} tag correctly filled
+     * @param returnTypeTag: the {@link Tag#returnType}
+     * @return the template without the {@code "{@link }"} tag as {@link String}
+     */
+    private String clearFromLinkTag(String template, String linkTag, String returnTypeTag) {
+        return template.replaceAll("\\{" + linkTag, returnTypeTag);
+    }
+
+    /**
+     * Method to format the {@link Tag#returnType} tag if the return type is a parameterized class
+     * <pre>
+     *   {@code
+     *       // <returnType> in the docu-comment will be formatted as:
+     *       // - if contains the {@link } tag -> {@link ArrayList} of {@link String}
+     *       // - if not contains the {@link } tag -> java.util.ArrayList of java.lang.String
+     *       public ArrayList<String> getList() {
+     *           // your code here
+     *       }
+     *
+     *       // <returnType> in the docu-comment will be formatted as:
+     *       // - if contains the {@link } tag -> {@link HashMap} of {@link String} and {@link String}
+     *       // - if not contains the {@link } tag -> java.util.HashMap of java.lang.String and java.lang.String
+     *       public HashMap<String, String> getMap() {
+     *           // your code here
+     *       }
+     *   }
+     * </pre>
+     *
+     * @param template:      template of the method to format
+     * @param linkTag:       the {@code "{@link }"} tag correctly filled
+     * @param returnTypeTag: the {@link Tag#returnType} tag
+     * @param vReturnType:   the return type value
+     * @return the template correctly formatted as {@link String}
+     */
+    // TODO: 15/07/2023 WORK AND FIX ON MANY CASES
+    private String formatParameterizedClass(String template, String linkTag, String returnTypeTag, String vReturnType) {
+        String[] components = vReturnType.split("<");
+        StringBuilder returnValue = new StringBuilder();
+        for (String component : components) {
+            if (component.contains(",")) {
+                if (returnValue.toString().endsWith(OF_KEYWORD)) {
+                    int totalLength = returnValue.length();
+                    returnValue.replace(totalLength - OF_KEYWORD.length(), totalLength, AND_KEYWORD);
+                }
+                for (String vClass : component.split(","))
+                    returnValue = appendClassValue(template, linkTag, returnValue, vClass, AND_KEYWORD);
+            } else {
+                if (returnValue.toString().endsWith(AND_KEYWORD)) {
+                    int totalLength = returnValue.length();
+                    returnValue.replace(totalLength - AND_KEYWORD.length(), totalLength, OF_KEYWORD);
+                }
+                returnValue = appendClassValue(template, linkTag, returnValue, component, OF_KEYWORD);
+            }
+        }
+        if (template.contains(linkTag))
+            template = clearFromLinkTag(template, linkTag, returnTypeTag);
+        return template.replaceAll(returnTypeTag, returnValue.toString());
+    }
+
+    /**
+     * Method to append a class value to the current {@link StringBuilder}
+     *
+     * @param template:    template of the method to format
+     * @param linkTag:     the {@code "{@link }"} tag correctly filled
+     * @param returnValue: the {@link Tag#returnType} tag
+     * @param vClass:      the class to append
+     * @param keyword:     the keyword to append ({@link #AND_KEYWORD} or {@link #OF_KEYWORD})
+     * @return the value to use as formatter as {@link StringBuilder}
+     */
+    // TODO: 15/07/2023 WORK AND FIX ON MANY CASES
+    private StringBuilder appendClassValue(String template, String linkTag, StringBuilder returnValue,
+                                           String vClass, String keyword) {
+        if (template.contains(linkTag)) {
+            returnValue.append("{@link ");
+            if (vClass.contains(">"))
+                returnValue.append(vClass.replace(">", "")).append("}");
+            else
+                returnValue.append(vClass).append("}").append(keyword);
+        } else {
+            if (vClass.contains(">"))
+                returnValue.append(vClass.replace(">", ""));
+            else
+                returnValue.append(vClass).append(keyword);
+        }
+        return returnValue;
     }
 
     /**
