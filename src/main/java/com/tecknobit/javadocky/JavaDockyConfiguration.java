@@ -179,7 +179,6 @@ public class JavaDockyConfiguration {
         public static MethodType reachMethodType(PsiMethod method) {
             String methodName = method.getName().toUpperCase();
             int parameters = method.getParameterList().getParameters().length;
-            String returnType = method.getReturnType().getCanonicalText();
             for (MethodType type : values()) {
                 String mType = type.toString();
                 if (mType.replace("_", "").equals(methodName))
