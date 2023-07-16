@@ -86,4 +86,9 @@
         </action>
     </actions>
 
+    <applicationListeners>
+        <listener class="com.tecknobit.javadocky.listeners.DocumentationChangeListener"
+                  topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+    </applicationListeners>
+
 </idea-plugin>

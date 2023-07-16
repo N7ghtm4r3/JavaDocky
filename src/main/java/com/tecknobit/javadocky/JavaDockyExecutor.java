@@ -12,6 +12,7 @@ import com.tecknobit.javadocky.JavaDockyConfiguration.JavaDockyItem;
 import org.jetbrains.annotations.NotNull;
 
 import static com.tecknobit.javadocky.JavaDockyConfiguration.configuration;
+import static com.tecknobit.javadocky.listeners.DocumentationChangeListener.listenerProject;
 
 /**
  * The {@code JavaDockyExecutor} class is useful to execute the {@code JavaDocky}'s plugin
@@ -42,6 +43,7 @@ public class JavaDockyExecutor extends AnAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
         project = e.getProject();
+        listenerProject = project;
         currentClass = ((PsiJavaFile) e.getData(PlatformDataKeys.PSI_FILE)).getClasses()[0];
         docuManager = new JavaDockyDocuManager(project, currentClass);
         execJavaDocky();
