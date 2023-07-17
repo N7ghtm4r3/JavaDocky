@@ -502,11 +502,7 @@ public class JavaDockyDocuManager {
      * @return the docu-template value of the field as {@link String}
      */
     private String formatFieldTemplate(PsiParameter parameter) {
-        return configuration.getFieldTemplate()
-                .replaceAll("/\\**\n *", "")
-                .replaceAll("\\*/", "")
-                .replaceAll("\\* ", "")
-                .replaceAll(instance.getTag(), parameter.getName());
+        return formatFieldTemplate(parameter.getName());
     }
 
     /**
@@ -517,6 +513,27 @@ public class JavaDockyDocuManager {
      */
     private PsiDocComment createDocuComment(String template) {
         return factory.createDocCommentFromText(template);
+    }
+
+    /**
+     * Method to fetch from a field the docu-template value
+     * <pre>
+     *   {@code
+     *       // its template for the docu-comment -> instance to make any actions
+     *       Object anyObject;
+     *   }
+     *  </pre>
+     * will be fetched {@code "instance to make any actions"}
+     *
+     * @param fieldName: the name of the field to format the template
+     * @return the docu-template value of the field as {@link String}
+     */
+    public static String formatFieldTemplate(String fieldName) {
+        return configuration.getFieldTemplate()
+                .replaceAll("/\\**\n *", "")
+                .replaceAll("\\*/", "")
+                .replaceAll("\\* ", "")
+                .replaceAll(instance.getTag(), fieldName);
     }
 
 }
