@@ -66,6 +66,8 @@
                     The <b>"returnType"</b> tag has been corrected when have to document the parameterized classes
                 </li>
                 <li>
+                    Now, when the documentation comments of fields of a class change, all occurrences of that field will
+                    be automatically re-documented without having to manually enter the new values one by one
                 </li>
             </ul>
         ]]>
