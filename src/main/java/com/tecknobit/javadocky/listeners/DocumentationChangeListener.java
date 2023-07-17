@@ -10,6 +10,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.psi.PsiManager.getInstance;
@@ -19,6 +21,10 @@ import static com.tecknobit.javadocky.JavaDockyDocuManager.formatFieldTemplate;
 
 public class DocumentationChangeListener implements BulkFileListener {
 
+    private static ArrayList<String> currentDocus = new ArrayList<>();
+
+    private static ArrayList<String> tempDocus = new ArrayList<>();
+
     private static final String OPEN_CURLY_BRACKET_REGEX = "OCBR";
 
     private static final String CLOSE_CURLY_BRACKET_REGEX = "CCBR";
@@ -27,32 +33,52 @@ public class DocumentationChangeListener implements BulkFileListener {
 
     public static Project listenerProject;
 
+    private PsiClass currentClass;
+
     @Override
     public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         BulkFileListener.super.after(events);
         if (listenerProject != null) {
             VirtualFile virtualFile = events.get(events.size() - 1).getFile();
-            PsiClass[] classes = ((PsiJavaFile) getInstance(listenerProject).findFile(virtualFile)).getClasses();
-            if (classes.length > 0)
-                rewriteDocu(classes[0]);
+            if (virtualFile != null) {
+                PsiJavaFile javaFile = (PsiJavaFile) getInstance(listenerProject).findFile(virtualFile);
+                if (javaFile != null) {
+                    PsiClass[] classes = javaFile.getClasses();
+                    if (classes.length > 0) {
+                        if (currentClass != classes[0]) {
+                            currentDocus = new ArrayList<>();
+                            tempDocus = new ArrayList<>();
+                            currentClass = classes[0];
+                        }
+                        rewriteDocu(currentClass);
+                    }
+                }
+            }
         }
     }
 
     private void rewriteDocu(PsiClass sourceClass) {
         PsiClass tmpClass = PsiElementFactory.getInstance(listenerProject).createClassFromText(
                 insertDanglingMetaCharacters(getChanges(sourceClass, sourceClass.getText())), null).getInnerClasses()[0];
-        for (PsiMethod tmpMethod : tmpClass.getMethods()) {
-            boolean isSetter = reachMethodType(tmpMethod) == SETTER;
-            if (tmpMethod.getName().equals(tmpClass.getName()) || isSetter) {
-                for (PsiMethod method : sourceClass.getMethods()) {
-                    if (method.getName().equals(sourceClass.getName()) || isSetter) {
-                        if (tmpMethod.getBody().getText().equals(method.getBody().getText())) {
-                            ApplicationManager.getApplication().invokeLater(() ->
-                                    WriteCommandAction.runWriteCommandAction(listenerProject, () -> {
-                                        PsiDocumentManager.getInstance(listenerProject).commitAllDocuments();
-                                        method.getDocComment().replace(tmpMethod.getDocComment());
-                                    })
-                            );
+        if (execute(currentClass)) {
+            for (PsiMethod tmpMethod : tmpClass.getMethods()) {
+                boolean isSetter = reachMethodType(tmpMethod) == SETTER;
+                if (tmpMethod.getName().equals(tmpClass.getName()) || isSetter) {
+                    for (PsiMethod method : sourceClass.getMethods()) {
+                        if (method.getName().equals(sourceClass.getName()) || isSetter) {
+                            if (tmpMethod.getBody().getText().equals(method.getBody().getText())) {
+                                PsiDocComment methodDocComment = method.getDocComment();
+                                PsiDocComment tmpMethodDocComment = tmpMethod.getDocComment();
+                                if ((methodDocComment != null && tmpMethodDocComment != null)
+                                        && (!methodDocComment.getText().equals(tmpMethodDocComment.getText()))) {
+                                    ApplicationManager.getApplication().invokeLater(() ->
+                                            WriteCommandAction.runWriteCommandAction(listenerProject, () -> {
+                                                PsiDocumentManager.getInstance(listenerProject).commitAllDocuments();
+                                                methodDocComment.replace(tmpMethodDocComment);
+                                            })
+                                    );
+                                }
+                            }
                         }
                     }
                 }
@@ -60,6 +86,29 @@ public class DocumentationChangeListener implements BulkFileListener {
         }
         for (PsiClass innerClass : sourceClass.getInnerClasses())
             rewriteDocu(innerClass);
+    }
+
+    private boolean execute(PsiClass sourceClass) {
+        populateTempDocus(sourceClass);
+        boolean execute = !Arrays.deepEquals(currentDocus.toArray(), tempDocus.toArray());
+        if (execute) {
+            currentDocus = new ArrayList<>(new ArrayList<>(tempDocus));
+            tempDocus = new ArrayList<>();
+        }
+        return execute;
+    }
+
+    private void populateTempDocus(PsiClass sourceClass) {
+        for (PsiField field : sourceClass.getFields()) {
+            PsiDocComment docComment = field.getDocComment();
+            if (docComment != null) {
+                String docuText = docComment.getText();
+                if (!tempDocus.contains(docuText))
+                    tempDocus.add(docuText);
+            }
+        }
+        for (PsiClass innerClass : sourceClass.getInnerClasses())
+            populateTempDocus(innerClass);
     }
 
     private String getChanges(PsiClass psiClass, String changes) {
