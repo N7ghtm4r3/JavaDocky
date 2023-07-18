@@ -69,6 +69,9 @@
                     Now, when the documentation comments of fields of a class change, all occurrences of that field will
                     be automatically re-documented without having to manually enter the new values one by one
                 </li>
+                <li>
+                    To execute JavaDocky you can now do it directly in the editor with a right click
+                </li>
             </ul>
         ]]>
     </change-notes>
@@ -83,14 +86,9 @@
 
     <actions>
         <action id="JavaDockyExecutor" class="com.tecknobit.javadocky.JavaDockyExecutor" text="Execute JavaDocky">
-            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <add-to-group group-id="EditorPopupMenu3" anchor="last"/>
             <keyboard-shortcut keymap="$default" first-keystroke="shift L" replace-all="true"/>
         </action>
     </actions>
-
-    <applicationListeners>
-        <listener class="com.tecknobit.javadocky.listeners.DocumentationChangeListener"
-                  topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
-    </applicationListeners>
 
 </idea-plugin>

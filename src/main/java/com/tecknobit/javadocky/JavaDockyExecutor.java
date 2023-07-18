@@ -4,6 +4,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -11,8 +13,8 @@ import com.intellij.util.ThrowableRunnable;
 import com.tecknobit.javadocky.JavaDockyConfiguration.JavaDockyItem;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.openapi.editor.EditorFactory.getInstance;
 import static com.tecknobit.javadocky.JavaDockyConfiguration.configuration;
-import static com.tecknobit.javadocky.listeners.DocumentationChangeListener.listenerProject;
 
 /**
  * The {@code JavaDockyExecutor} class is useful to execute the {@code JavaDocky}'s plugin
@@ -43,10 +45,21 @@ public class JavaDockyExecutor extends AnAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
         project = e.getProject();
-        listenerProject = project;
         currentClass = ((PsiJavaFile) e.getData(PlatformDataKeys.PSI_FILE)).getClasses()[0];
         docuManager = new JavaDockyDocuManager(project, currentClass);
         execJavaDocky();
+        getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
+            /**
+             * Called after the text of the document has been changed.
+             *
+             * @param event the event containing the information about the change.
+             */
+            @Override
+            public void documentChanged(@NotNull DocumentEvent event) {
+                DocumentListener.super.documentChanged(event);
+                new FieldsReplacer(project, event.getDocument());
+            }
+        }, project.getMessageBus().connect());
     }
 
     /**

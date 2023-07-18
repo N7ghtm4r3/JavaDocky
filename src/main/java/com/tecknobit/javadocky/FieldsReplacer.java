@@ -1,44 +1,38 @@
-package com.tecknobit.javadocky.listeners;
+package com.tecknobit.javadocky;
 
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.tecknobit.javadocky.JavaDockyConfiguration;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
-import static com.intellij.psi.PsiManager.getInstance;
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
+import static com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction;
 import static com.tecknobit.javadocky.JavaDockyConfiguration.MethodType.SETTER;
 import static com.tecknobit.javadocky.JavaDockyConfiguration.MethodType.reachMethodType;
 import static com.tecknobit.javadocky.JavaDockyDocuManager.formatFieldTemplate;
 
 /**
- * The {@code DocumentationChangeListener} class is useful to detect when the current class where the user is working on
- * changes the documentation of the fields, this allows this listener to modify all the occurrences of that field of all
- * documentation comments that appear in the class
+ * The {@code FieldsReplacer} class is useful to modify all the documentation comments that appear in the class of the
+ * fields that has been changed
  *
  * @author N7ghtm4r3 - Tecknobit
  * @apiNote this when the {@link JavaDockyConfiguration.Tag#params} is used in the configured template
- * @see BulkFileListener
  */
-public class DocumentationChangeListener implements BulkFileListener {
+public class FieldsReplacer {
 
     /**
      * {@code currentDocus} list of the current documentation comments of the class
+     *
      * @apiNote when the class changes will be recreated
      */
     private static ArrayList<String> currentDocus = new ArrayList<>();
 
     /**
      * {@code tempDocus} check list of the current documentation comments of the class
+     *
      * @apiNote when the class changes will be recreated
      */
     private static ArrayList<String> tempDocus = new ArrayList<>();
@@ -59,9 +53,19 @@ public class DocumentationChangeListener implements BulkFileListener {
     private static final String STAR_REGEX = "STRX";
 
     /**
-     * {@code listenerProject} instance of the project to work on
+     * {@code project} instance of the project to work on
      */
-    public static Project listenerProject;
+    private final Project project;
+
+    /**
+     * {@code document} the document to work on
+     */
+    private final Document document;
+
+    /**
+     * {@code documentManager} the document manager
+     */
+    private final PsiDocumentManager documentManager;
 
     /**
      * {@code currentClass} instance of the current class to work on
@@ -69,28 +73,25 @@ public class DocumentationChangeListener implements BulkFileListener {
     private PsiClass currentClass;
 
     /**
-     * Method to compute after an event happened
+     * Constructor to init a {@link FieldsReplacer} object
      *
-     * @param events: list of events happened
+     * @param project:  instance of the project to work on
+     * @param document: the document to work on
      */
-    @Override
-    public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
-        BulkFileListener.super.after(events);
-        if (listenerProject != null) {
-            VirtualFile virtualFile = events.get(events.size() - 1).getFile();
-            if (virtualFile != null) {
-                PsiJavaFile javaFile = (PsiJavaFile) getInstance(listenerProject).findFile(virtualFile);
-                if (javaFile != null) {
-                    PsiClass[] classes = javaFile.getClasses();
-                    if (classes.length > 0) {
-                        if (currentClass != classes[0]) {
-                            currentDocus = new ArrayList<>();
-                            tempDocus = new ArrayList<>();
-                            currentClass = classes[0];
-                        }
-                        rewriteDocu(currentClass);
-                    }
+    public FieldsReplacer(Project project, Document document) {
+        this.project = project;
+        this.document = document;
+        documentManager = PsiDocumentManager.getInstance(project);
+        PsiJavaFile javaFile = (PsiJavaFile) documentManager.getCachedPsiFile(document);
+        if (javaFile != null) {
+            PsiClass[] classes = javaFile.getClasses();
+            if (classes.length > 0) {
+                if (currentClass != classes[0]) {
+                    currentDocus = new ArrayList<>();
+                    tempDocus = new ArrayList<>();
+                    currentClass = classes[0];
                 }
+                rewriteDocu(currentClass);
             }
         }
     }
@@ -103,7 +104,7 @@ public class DocumentationChangeListener implements BulkFileListener {
      */
     private void rewriteDocu(PsiClass sourceClass) {
         if (execute(currentClass)) {
-            PsiClass tmpClass = PsiElementFactory.getInstance(listenerProject).createClassFromText(
+            PsiClass tmpClass = PsiElementFactory.getInstance(project).createClassFromText(
                     insertDanglingMetaCharacters(getChanges(sourceClass, sourceClass.getText())),
                     null).getInnerClasses()[0];
             for (PsiMethod tmpMethod : tmpClass.getMethods()) {
@@ -116,17 +117,12 @@ public class DocumentationChangeListener implements BulkFileListener {
                                 PsiDocComment tmpMethodDocComment = tmpMethod.getDocComment();
                                 if ((methodDocComment != null && tmpMethodDocComment != null)
                                         && (!methodDocComment.getText().equals(tmpMethodDocComment.getText()))) {
-                                    DumbService.getInstance(listenerProject).smartInvokeLater(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            WriteCommandAction.runWriteCommandAction(listenerProject, new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    methodDocComment.replace(tmpMethodDocComment);
-                                                }
-                                            });
-                                        }
-                                    });
+                                    getApplication().invokeLater(() ->
+                                            runWriteCommandAction(project, () -> {
+                                                documentManager.commitDocument(document);
+                                                methodDocComment.replace(tmpMethodDocComment);
+                                            })
+                                    );
                                 }
                             }
                         }
