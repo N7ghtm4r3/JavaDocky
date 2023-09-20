@@ -4,29 +4,29 @@ plugins {
 }
 
 group = "com.tecknobit"
-version = "1.0.4"
+version = "1.0.5"
 
 repositories {
     mavenCentral()
 }
 
 intellij {
-    version.set("2022.1.4")
+    version.set("2023.1.1")
     type.set("IC") // Target IDE Platform
 
     plugins.set(listOf("com.intellij.java"))
 }
 
 tasks {
-    // Set the JVM compatibility versions
+
     withType<JavaCompile> {
-        sourceCompatibility = "11"
-        targetCompatibility = "11"
+        sourceCompatibility = "17"
+        targetCompatibility = "17"
     }
 
     patchPluginXml {
-        sinceBuild.set("221")
-        untilBuild.set("231.*")
+        sinceBuild.set("231")
+        untilBuild.set("241.*")
     }
 
     signPlugin {

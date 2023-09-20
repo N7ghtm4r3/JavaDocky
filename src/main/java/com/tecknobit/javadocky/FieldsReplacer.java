@@ -60,7 +60,7 @@ public class FieldsReplacer {
     /**
      * {@code document} the document to work on
      */
-    private final Document document;
+    private Document document;
 
     /**
      * {@code documentManager} the document manager
@@ -75,14 +75,26 @@ public class FieldsReplacer {
     /**
      * Constructor to init a {@link FieldsReplacer} object
      *
-     * @param project:  instance of the project to work on
+     * @param project: instance of the project to work on
+     */
+    public FieldsReplacer(Project project) {
+        this.project = project;
+        documentManager = PsiDocumentManager.getInstance(project);
+    }
+
+    /**
+     * Method to replace the fields documentation
+     *
      * @param document: the document to work on
      */
-    public FieldsReplacer(Project project, Document document) {
-        this.project = project;
+    public void replaceFields(Document document) {
         this.document = document;
-        documentManager = PsiDocumentManager.getInstance(project);
-        PsiJavaFile javaFile = (PsiJavaFile) documentManager.getCachedPsiFile(document);
+        PsiJavaFile javaFile;
+        try {
+            javaFile = (PsiJavaFile) documentManager.getCachedPsiFile(document);
+        } catch (ClassCastException classCastException) {
+            javaFile = null;
+        }
         if (javaFile != null) {
             PsiClass[] classes = javaFile.getClasses();
             if (classes.length > 0) {
@@ -180,6 +192,9 @@ public class FieldsReplacer {
                         .replaceAll("\n", "")).trim()
                         .replace(removeDanglingMetaCharacters(formatFieldTemplate(fieldName)).trim(), "");
                 String regex = getRegex(changes, fieldName);
+                // TODO: 20/09/2023 WORK ON 
+                System.out.println(regex);
+                System.out.println(description);
                 if (!description.isEmpty() && !description.equals(regex)) {
                     changes = removeDanglingMetaCharacters(changes).replaceAll(removeDanglingMetaCharacters("* @param "
                             + fieldName + ": " + regex), "* @param " + fieldName + ":" + description);

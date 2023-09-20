@@ -32,7 +32,7 @@ import static com.intellij.ide.highlighter.JavaFileType.INSTANCE;
 import static com.intellij.openapi.ui.Messages.showErrorDialog;
 import static com.intellij.openapi.ui.Messages.showInputDialog;
 import static com.intellij.psi.PsiElementFactory.getInstance;
-import static com.intellij.ui.content.ContentFactory.SERVICE.getInstance;
+import static com.intellij.ui.content.ContentFactory.getInstance;
 import static com.intellij.util.ui.JBUI.Borders.empty;
 import static com.tecknobit.javadocky.JavaDockyConfiguration.*;
 import static com.tecknobit.javadocky.JavaDockyConfiguration.JavaDockyItem.Methods;

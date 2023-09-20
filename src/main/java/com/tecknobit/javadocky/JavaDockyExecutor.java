@@ -45,21 +45,29 @@ public class JavaDockyExecutor extends AnAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
         project = e.getProject();
-        currentClass = ((PsiJavaFile) e.getData(PlatformDataKeys.PSI_FILE)).getClasses()[0];
-        docuManager = new JavaDockyDocuManager(project, currentClass);
-        execJavaDocky();
-        getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
-            /**
-             * Called after the text of the document has been changed.
-             *
-             * @param event the event containing the information about the change.
-             */
-            @Override
-            public void documentChanged(@NotNull DocumentEvent event) {
-                DocumentListener.super.documentChanged(event);
-                new FieldsReplacer(project, event.getDocument());
-            }
-        }, project.getMessageBus().connect());
+        try {
+            currentClass = ((PsiJavaFile) e.getData(PlatformDataKeys.PSI_FILE)).getClasses()[0];
+        } catch (ClassCastException classCastException) {
+            currentClass = null;
+        }
+        if (currentClass != null) {
+            currentClass = ((PsiJavaFile) e.getData(PlatformDataKeys.PSI_FILE)).getClasses()[0];
+            docuManager = new JavaDockyDocuManager(project, currentClass);
+            FieldsReplacer fieldsReplacer = new FieldsReplacer(project);
+            execJavaDocky();
+            getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
+                /**
+                 * Called after the text of the document has been changed.
+                 *
+                 * @param event the event containing the information about the change.
+                 */
+                @Override
+                public void documentChanged(@NotNull DocumentEvent event) {
+                    DocumentListener.super.documentChanged(event);
+                    fieldsReplacer.replaceFields(event.getDocument());
+                }
+            }, project.getMessageBus().connect());
+        }
     }
 
     /**
