@@ -192,9 +192,6 @@ public class FieldsReplacer {
                         .replaceAll("\n", "")).trim()
                         .replace(removeDanglingMetaCharacters(formatFieldTemplate(fieldName)).trim(), "");
                 String regex = getRegex(changes, fieldName);
-                // TODO: 20/09/2023 WORK ON 
-                System.out.println(regex);
-                System.out.println(description);
                 if (!description.isEmpty() && !description.equals(regex)) {
                     changes = removeDanglingMetaCharacters(changes).replaceAll(removeDanglingMetaCharacters("* @param "
                             + fieldName + ": " + regex), "* @param " + fieldName + ":" + description);

@@ -1,7 +1,7 @@
 <idea-plugin>
 
     <id>com.tecknobit.javadocky</id>
-    <version>1.0.4</version>
+    <version>1.0.5</version>
     <name>JavaDocky</name>
     <vendor email="infotecknobitcompany@gmail.com" url="https://github.com/N7ghtm4r3">Tecknobit</vendor>
 
@@ -71,6 +71,13 @@
                 </li>
                 <li>
                     To execute JavaDocky you can now do it directly in the editor with a right click
+                </li>
+            </ul>
+            <h1>v. 1.0.5</h1><br>
+            The general documentation's workflow has been optimized and perfected:
+            <ul>
+                <li>
+                    Fixed some issues and the deprecated usages has been removed
                 </li>
             </ul>
         ]]>

@@ -3,6 +3,7 @@ package com.tecknobit.javadocky;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -66,6 +67,7 @@ public class JavaDockyExecutor extends AnAction {
                     DocumentListener.super.documentChanged(event);
                     fieldsReplacer.replaceFields(event.getDocument());
                 }
+
             }, project.getMessageBus().connect());
         }
     }
@@ -75,15 +77,17 @@ public class JavaDockyExecutor extends AnAction {
      * Any-params required
      */
     private void execJavaDocky() {
-        try {
-            useClassesDocuTemplate();
-            useFieldsDocuTemplate();
-            useConstructorsTemplate();
-            useMethodsTemplate();
-            navigateInnerClasses(currentClass);
-        } catch (Throwable ex) {
-            throw new RuntimeException(ex);
-        }
+        ApplicationManager.getApplication().invokeLater(() -> {
+            try {
+                useClassesDocuTemplate();
+                useFieldsDocuTemplate();
+                useConstructorsTemplate();
+                useMethodsTemplate();
+                navigateInnerClasses(currentClass);
+            } catch (Throwable ex) {
+                throw new RuntimeException(ex);
+            }
+        });
     }
 
     /**
